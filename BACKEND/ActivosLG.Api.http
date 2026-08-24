@@ -1,0 +1,6 @@
+@ActivosLG.Api_HostAddress = http://localhost:5063
+
+GET {{ActivosLG.Api_HostAddress}}/db-check
+Accept: application/json
+
+###
