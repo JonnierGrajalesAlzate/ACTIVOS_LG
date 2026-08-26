@@ -1,0 +1,16 @@
+# Backend (.NET)
+BACKEND/bin/
+BACKEND/obj/
+BACKEND/.env
+*.user
+
+# Frontend (Node / Vite)
+FRONTEND/node_modules/
+FRONTEND/dist/
+FRONTEND/.vite/
+
+# Editor / OS
+.vs/
+.vscode/
+*.swp
+.DS_Store

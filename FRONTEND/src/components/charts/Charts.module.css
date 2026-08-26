@@ -1,0 +1,121 @@
+/* Serie unica secuencial: un solo tono, mas oscuro = mayor magnitud.
+   Sin leyenda (el titulo nombra lo graficado). */
+.distList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.distRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  column-gap: 12px;
+}
+
+.distLabel {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Valores en columna: tabular para que alineen verticalmente. */
+.distValue {
+  font-size: 13px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.distTrack {
+  grid-column: 1 / -1;
+  height: 10px;
+  margin-top: 6px;
+  background: transparent;
+}
+
+.distFill {
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+  transition: width 180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Columnas verticales (vencimientos por anio) */
+.cols {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  height: 180px;
+  padding: 0 4px;
+  border-bottom: 1px solid var(--line);
+}
+
+.col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+  height: 100%;
+  min-width: 0;
+}
+
+.colValue {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.colBar {
+  width: 100%;
+  max-width: 24px;
+  border-radius: 4px 4px 0 0;
+  min-height: 3px;
+}
+
+.colLabels {
+  display: flex;
+  gap: 14px;
+  padding: 10px 4px 0;
+}
+
+.colLabel {
+  flex: 1;
+  text-align: center;
+  font-size: 11.5px;
+  color: var(--ink-4);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Categoria unica: cifra, no grafico. */
+.single {
+  padding: 4px 0;
+}
+
+.singleValue {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -1.4px;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.singleLabel {
+  font-size: 13.5px;
+  color: var(--ink-3);
+  margin-top: 8px;
+}
+
+.empty {
+  padding: 32px;
+  text-align: center;
+  color: var(--ink-4);
+  font-size: 13.5px;
+}

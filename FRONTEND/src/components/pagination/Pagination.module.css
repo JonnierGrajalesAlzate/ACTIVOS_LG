@@ -1,0 +1,32 @@
+.bar {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--ink-4);
+}
+
+.page {
+  padding: 3px 10px;
+  border-radius: 8px;
+  border: none;
+  background: none;
+  color: var(--ink-4);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.pageActive {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  cursor: default;
+}
+
+.summary {
+  margin-left: auto;
+}

@@ -1,0 +1,87 @@
+/* Patron E: tarjeta de alerta */
+.alert {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--ink-4);
+  border-radius: 14px;
+  padding: 15px 18px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.alertDanger {
+  border-left-color: var(--danger);
+}
+
+.alertWarn {
+  border-left-color: var(--warn);
+}
+
+.alertTitle {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.alertContext {
+  font-size: 12.5px;
+  color: var(--ink-4);
+  margin-top: 2px;
+}
+
+.alertRight {
+  margin-left: auto;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.alertReason {
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.alertDetail {
+  font-size: 12.5px;
+  color: var(--ink-3);
+  margin-top: 2px;
+}
+
+/* Patron F: tarjeta suave */
+.soft {
+  background: var(--surface-soft);
+  border-radius: 16px;
+  padding: 18px 20px;
+}
+
+.softLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-4);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.softValue {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -1.4px;
+  margin-top: 8px;
+}
+
+.softHelp {
+  font-size: 12.5px;
+  color: var(--ink-3);
+  margin-top: 6px;
+}
+
+/* Encabezado de seccion */
+.sectionTitle {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  font-weight: 800;
+  margin-bottom: 12px;
+}
