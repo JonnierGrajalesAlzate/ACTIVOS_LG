@@ -1,34 +1,68 @@
-.panel {
-  width: 250px;
+.sidebar {
   flex-shrink: 0;
   background: var(--surface);
   border-right: 1px solid var(--line);
-  box-shadow: var(--shadow-panel);
-  padding: 20px 14px;
   display: flex;
   flex-direction: column;
   position: sticky;
   top: 0;
   height: 100vh;
-  z-index: 20;
+  overflow: hidden;
+  box-sizing: border-box;
+  transition: width 0.2s ease;
 }
 
-.brand {
-  padding: 4px 10px 18px;
+.collapsed {
+  width: 92px;
+  padding: 20px 0;
+  align-items: center;
+}
+
+.expanded {
+  width: 264px;
+  padding: 20px 14px;
+}
+
+.brandRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding: 0 4px;
+  width: 100%;
+}
+
+.collapsed .brandRow {
+  justify-content: center;
+  padding: 0;
+}
+
+.brandLogo {
+  height: 52px;
+  width: auto;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.brandText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .brandName {
-  display: block;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 800;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.3px;
+  white-space: nowrap;
 }
 
 .brandSub {
-  font-size: 10.5px;
+  font-size: 10px;
   color: var(--ink-4);
   font-weight: 700;
   letter-spacing: 0.08em;
+  white-space: nowrap;
 }
 
 .project {
@@ -36,6 +70,8 @@
   border-radius: 12px;
   padding: 10px 12px;
   margin-bottom: 16px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .projectLabel {
@@ -61,6 +97,21 @@
   border-radius: 50%;
   background: var(--accent);
   box-shadow: 0 0 0 3px rgba(75, 63, 212, 0.18);
+  flex-shrink: 0;
+}
+
+.nav {
+  width: 100%;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.divider {
+  width: 26px;
+  height: 1px;
+  background: var(--line);
+  margin: 8px auto;
 }
 
 .groupLabel {
@@ -82,6 +133,15 @@
   font-weight: 600;
   color: var(--ink-2);
   text-decoration: none;
+  white-space: nowrap;
+}
+
+.collapsed .row {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  justify-content: center;
+  margin: 0 auto;
 }
 
 .row:hover {
@@ -92,7 +152,7 @@
   font-weight: 800;
   background: var(--accent);
   color: #fff;
-  box-shadow: var(--shadow-panel-active);
+  box-shadow: var(--shadow-nav-active);
 }
 
 .rowActive:hover {
@@ -100,9 +160,9 @@
 }
 
 .rowIcon {
-  width: 24px;
-  text-align: center;
-  display: inline-flex;
+  width: 20px;
+  flex-shrink: 0;
+  display: flex;
   justify-content: center;
 }
 
@@ -110,9 +170,17 @@
   margin-top: auto;
   border-top: 1px solid var(--line-2);
   padding-top: 14px;
+  width: 100%;
+}
+
+.footerRow {
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: 10px;
+}
+
+.collapsed .footerRow {
+  flex-direction: column;
 }
 
 .avatar {
@@ -128,10 +196,18 @@
   flex-shrink: 0;
 }
 
+.userInfo {
+  flex: 1;
+  min-width: 0;
+}
+
 .userName {
   display: block;
   font-size: 13px;
   font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .userRole {
@@ -140,19 +216,37 @@
   color: var(--ink-4);
 }
 
-.collapse {
-  margin-left: auto;
+.iconButton {
   border: none;
   background: none;
   color: var(--ink-4);
   cursor: pointer;
   display: grid;
   place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  flex-shrink: 0;
 }
 
-.scrim {
-  position: fixed;
-  inset: 0;
-  background: rgba(27, 27, 43, 0.06);
-  z-index: 10;
+.iconButton:hover {
+  background: var(--fill);
+  color: var(--ink-2);
+}
+
+.toggle {
+  border: 1px solid var(--line);
+  background: none;
+  color: var(--ink-4);
+  cursor: pointer;
+  width: 34px;
+  height: 34px;
+  border-radius: 13px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.toggle:hover {
+  background: var(--fill);
 }
