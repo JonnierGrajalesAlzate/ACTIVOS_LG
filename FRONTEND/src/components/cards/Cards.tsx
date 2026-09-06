@@ -1,3 +1,4 @@
+import { AlertOctagon, AlertTriangle, Info } from 'lucide-react';
 import type { ReactNode } from 'react';
 import styles from './Cards.module.css';
 
@@ -15,11 +16,17 @@ interface AlertCardProps {
 
 export function AlertCard({ titulo, contexto, motivo, detalle, severidad }: AlertCardProps) {
   const tone = severidad === 'danger' ? 'var(--danger)' : severidad === 'warn' ? 'var(--warn)' : 'var(--ink-2)';
+  const iconBg =
+    severidad === 'danger' ? 'rgba(194, 64, 91, 0.12)' : severidad === 'warn' ? 'rgba(154, 107, 34, 0.12)' : 'var(--fill)';
   const cls =
     severidad === 'danger' ? styles.alertDanger : severidad === 'warn' ? styles.alertWarn : '';
+  const Icon = severidad === 'danger' ? AlertOctagon : severidad === 'warn' ? AlertTriangle : Info;
 
   return (
     <div className={`${styles.alert} ${cls}`}>
+      <span className={styles.alertIcon} style={{ color: tone, background: iconBg }}>
+        <Icon size={17} strokeWidth={2} />
+      </span>
       <div>
         <b className={styles.alertTitle}>{titulo}</b>
         <div className={styles.alertContext}>{contexto}</div>
