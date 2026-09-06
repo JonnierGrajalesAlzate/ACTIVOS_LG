@@ -1,5 +1,6 @@
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, LogOut } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
+import { useAuth } from '../../auth/AuthContext';
 import { navGroups, navItems } from '../../nav/navConfig';
 import styles from './NavPanel.module.css';
 
@@ -7,7 +8,18 @@ interface NavPanelProps {
   onCollapse: () => void;
 }
 
+function initials(nombre: string): string {
+  return nombre
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('');
+}
+
 export function NavPanel({ onCollapse }: NavPanelProps) {
+  const { usuario, logout } = useAuth();
+
   return (
     <nav className={styles.panel}>
       <div className={styles.brand}>
@@ -47,11 +59,14 @@ export function NavPanel({ onCollapse }: NavPanelProps) {
       ))}
 
       <div className={styles.footer}>
-        <div className={styles.avatar}>SO</div>
+        <div className={styles.avatar}>{usuario ? initials(usuario.nombre) : ''}</div>
         <div>
-          <b className={styles.userName}>Sergio O.</b>
-          <em className={styles.userRole}>Administrador</em>
+          <b className={styles.userName}>{usuario?.nombre ?? ''}</b>
+          <em className={styles.userRole}>{usuario?.rol ?? ''}</em>
         </div>
+        <button type="button" className={styles.collapse} onClick={logout} aria-label="Cerrar sesion" title="Cerrar sesion">
+          <LogOut size={15} />
+        </button>
         <button type="button" className={styles.collapse} onClick={onCollapse} aria-label="Colapsar navegacion">
           <ChevronLeft size={16} />
         </button>

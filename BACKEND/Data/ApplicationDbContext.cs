@@ -44,6 +44,8 @@ public partial class ApplicationDbContext : DbContext
 
     public virtual DbSet<TipoLocal> TipoLocals { get; set; }
 
+    public virtual DbSet<Usuario> Usuarios { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Administracion>(entity =>
@@ -508,6 +510,40 @@ public partial class ApplicationDbContext : DbContext
                 .HasMaxLength(100)
                 .IsUnicode(false)
                 .HasColumnName("descripcion");
+        });
+
+        modelBuilder.Entity<Usuario>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK_usuario");
+
+            entity.ToTable("usuario");
+
+            entity.HasIndex(e => e.Email, "UQ_usuario_email").IsUnique();
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Email)
+                .HasMaxLength(200)
+                .IsUnicode(false)
+                .HasColumnName("email");
+            entity.Property(e => e.PasswordHash)
+                .HasMaxLength(200)
+                .IsUnicode(false)
+                .HasColumnName("password_hash");
+            entity.Property(e => e.Nombre)
+                .HasMaxLength(200)
+                .IsUnicode(false)
+                .HasColumnName("nombre");
+            entity.Property(e => e.Rol)
+                .HasMaxLength(30)
+                .IsUnicode(false)
+                .HasColumnName("rol")
+                .HasDefaultValue("lectura");
+            entity.Property(e => e.Activo)
+                .HasColumnName("activo")
+                .HasDefaultValue(true);
+            entity.Property(e => e.FechaCreacion)
+                .HasColumnName("fecha_creacion")
+                .HasDefaultValueSql("sysutcdatetime()");
         });
 
         OnModelCreatingPartial(modelBuilder);

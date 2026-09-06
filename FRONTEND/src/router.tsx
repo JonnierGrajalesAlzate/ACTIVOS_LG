@@ -1,18 +1,25 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AppShell } from './components/layout/AppShell';
+import { RequireAuth } from './auth/RequireAuth';
 import { ArrendadoresPage } from './pages/ArrendadoresPage';
 import { ArrendatariosPage } from './pages/ArrendatariosPage';
 import { ContratosPage } from './pages/ContratosPage';
 import { EgresosPage } from './pages/EgresosPage';
 import { InicioPage } from './pages/InicioPage';
 import { InmueblesPage } from './pages/InmueblesPage';
+import { LoginPage } from './pages/LoginPage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 import { ReportesPage } from './pages/ReportesPage';
 
 export const router = createBrowserRouter([
+  { path: '/login', element: <LoginPage /> },
   {
     path: '/',
-    element: <AppShell />,
+    element: (
+      <RequireAuth>
+        <AppShell />
+      </RequireAuth>
+    ),
     children: [
       { index: true, element: <Navigate to="/inicio" replace /> },
       { path: 'inicio', element: <InicioPage /> },

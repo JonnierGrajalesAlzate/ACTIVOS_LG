@@ -24,6 +24,7 @@ public static class DatabaseEndpoints
                 return Results.Problem(ex.Message);
             }
         })
+        .AllowAnonymous()
         .WithName("DbCheck")
         .WithTags("Database");
     }

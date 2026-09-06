@@ -1,5 +1,6 @@
 import { ChevronRight } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
+import { useAuth } from '../../auth/AuthContext';
 import { navItems } from '../../nav/navConfig';
 import styles from './Rail.module.css';
 
@@ -7,7 +8,18 @@ interface RailProps {
   onToggle: () => void;
 }
 
+function initials(nombre: string): string {
+  return nombre
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('');
+}
+
 export function Rail({ onToggle }: RailProps) {
+  const { usuario } = useAuth();
+
   return (
     <aside className={styles.rail}>
       <div className={styles.brand}>LG</div>
@@ -32,7 +44,7 @@ export function Rail({ onToggle }: RailProps) {
         <button type="button" className={styles.toggle} onClick={onToggle} aria-label="Expandir navegacion">
           <ChevronRight size={16} />
         </button>
-        <div className={styles.avatar}>SO</div>
+        <div className={styles.avatar}>{usuario ? initials(usuario.nombre) : ''}</div>
       </div>
     </aside>
   );
