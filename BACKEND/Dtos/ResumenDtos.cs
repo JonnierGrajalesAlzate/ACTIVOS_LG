@@ -12,6 +12,7 @@ public record ResumenKpisDto(
 );
 
 public record OcupacionProyectoDto(
+    int Id,
     string Proyecto,
     int Inmuebles,
     int Arrendados,

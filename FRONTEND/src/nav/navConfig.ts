@@ -1,6 +1,7 @@
 import {
   BarChart3,
   Banknote,
+  Bell,
   Building2,
   FileText,
   FolderUp,
@@ -14,6 +15,7 @@ import {
 export type TabId =
   | 'inicio'
   | 'inmuebles'
+  | 'alertas'
   | 'egresos'
   | 'arrendadores'
   | 'arrendatarios'
@@ -33,6 +35,7 @@ export interface NavItem {
 export const navItems: NavItem[] = [
   { id: 'inicio', path: '/inicio', label: 'Inicio', icon: LayoutGrid, group: 'Portafolio' },
   { id: 'inmuebles', path: '/inmuebles', label: 'Inmuebles', icon: Building2, group: 'Portafolio' },
+  { id: 'alertas', path: '/alertas', label: 'Alertas', icon: Bell, group: 'Portafolio' },
   { id: 'egresos', path: '/egresos', label: 'Egresos', icon: Banknote, group: 'Portafolio' },
   { id: 'arrendadores', path: '/arrendadores', label: 'Arrendadores', icon: Users, group: 'Contrapartes' },
   { id: 'arrendatarios', path: '/arrendatarios', label: 'Arrendatarios', icon: User, group: 'Contrapartes' },
@@ -51,8 +54,9 @@ export interface PageMeta {
 }
 
 export const pageMeta: Record<TabId, PageMeta> = {
-  inicio: { title: 'Inicio', subtitle: 'Resumen del portafolio', actionLabel: '+ Registrar inmueble' },
+  inicio: { title: 'Inicio', subtitle: '', actionLabel: '+ Registrar proyecto' },
   inmuebles: { title: 'Inmuebles', subtitle: 'Inventario de predios', actionLabel: '+ Registrar inmueble' },
+  alertas: { title: 'Alertas', subtitle: 'Contratos por vencer y vacantes en perdida', actionLabel: 'Actualizar' },
   egresos: { title: 'Egresos', subtitle: 'Costo mensual por inmueble', actionLabel: '+ Registrar egreso' },
   arrendadores: { title: 'Arrendadores', subtitle: 'Propietarios de los inmuebles', actionLabel: '+ Nuevo arrendador' },
   arrendatarios: { title: 'Arrendatarios', subtitle: 'Contrapartes de arrendamiento', actionLabel: '+ Nuevo arrendatario' },

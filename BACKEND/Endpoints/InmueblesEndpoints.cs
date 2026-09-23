@@ -1,4 +1,5 @@
 using ActivosLG.Api.Data;
+using ActivosLG.Api.Data.Entities;
 using ActivosLG.Api.Dtos;
 using Microsoft.EntityFrameworkCore;
 
@@ -150,5 +151,32 @@ public static class InmueblesEndpoints
             return Results.Ok(proyectos);
         })
         .WithName("GetInmueblesProyectosFiltro");
+
+        group.MapPost("/proyectos", async (CrearProyectoDto request, ApplicationDbContext db) =>
+        {
+            var nombre = request.Nombre?.Trim();
+            if (string.IsNullOrWhiteSpace(nombre))
+            {
+                return Results.BadRequest(new { message = "El nombre del proyecto es obligatorio." });
+            }
+
+            if (nombre.Length > 200)
+            {
+                return Results.BadRequest(new { message = "El nombre del proyecto no puede superar 200 caracteres." });
+            }
+
+            var existe = await db.Proyectos.AnyAsync(p => p.Nombre == nombre);
+            if (existe)
+            {
+                return Results.Conflict(new { message = "Ya existe un proyecto con ese nombre." });
+            }
+
+            var proyecto = new Proyecto { Nombre = nombre };
+            db.Proyectos.Add(proyecto);
+            await db.SaveChangesAsync();
+
+            return Results.Ok(new ProyectoDto(proyecto.Id, proyecto.Nombre));
+        })
+        .WithName("CrearProyecto");
     }
 }

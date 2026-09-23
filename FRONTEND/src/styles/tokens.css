@@ -1,6 +1,8 @@
 :root {
   --accent: #4b3fd4;
   --accent-ink: #3a31a8;
+  --accent-light: #8478e8;
+  --accent-pale: #b9b0f5;
   --bg: #fcfcfe;
   --rail-top: #f2f0fe;
   --surface: #ffffff;
@@ -19,9 +21,14 @@
   --warn: #9a6b22;
   --toggle-off: #dfdcf3;
 
-  --font-sans: 'Manrope', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
 
   --shadow-nav-active: 0 8px 18px -8px rgba(75, 63, 212, 0.9);
   --shadow-panel-active: 0 10px 22px -10px rgba(75, 63, 212, 0.9);
   --shadow-panel: 22px 0 44px -30px rgba(40, 40, 90, 0.55);
+
+  --shadow-xs: 0 1px 2px rgba(43, 34, 110, 0.05);
+  --shadow-sm: 0 4px 14px rgba(43, 34, 110, 0.07);
+  --shadow-md: 0 10px 28px rgba(43, 34, 110, 0.09);
+  --shadow-lg: 0 20px 48px rgba(43, 34, 110, 0.14);
 }

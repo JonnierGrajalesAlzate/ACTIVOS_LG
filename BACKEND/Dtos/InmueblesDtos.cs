@@ -34,3 +34,7 @@ public record InmueblesResponseDto(
     InmueblesKpisDto Kpis,
     IReadOnlyList<EstadoConteoDto> Estados
 );
+
+public record ProyectoDto(int Id, string Nombre);
+
+public record CrearProyectoDto(string Nombre);

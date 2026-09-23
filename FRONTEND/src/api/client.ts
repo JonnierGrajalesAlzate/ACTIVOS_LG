@@ -19,7 +19,8 @@ async function handleResponse<T>(res: Response, path: string, onUnauthorized: 'e
     throw new Error('Credenciales invalidas.');
   }
   if (!res.ok) {
-    throw new Error(`${res.status} ${res.statusText} al consultar ${path}`);
+    const body = await res.json().catch(() => null) as { message?: string } | null;
+    throw new Error(body?.message ?? `${res.status} ${res.statusText} al consultar ${path}`);
   }
   return res.json() as Promise<T>;
 }

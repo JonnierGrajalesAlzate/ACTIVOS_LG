@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AppShell } from './components/layout/AppShell';
 import { RequireAuth } from './auth/RequireAuth';
+import { AlertasPage } from './pages/AlertasPage';
 import { ArrendadoresPage } from './pages/ArrendadoresPage';
 import { ArrendatariosPage } from './pages/ArrendatariosPage';
 import { ContratosPage } from './pages/ContratosPage';
@@ -24,6 +25,7 @@ export const router = createBrowserRouter([
       { index: true, element: <Navigate to="/inicio" replace /> },
       { path: 'inicio', element: <InicioPage /> },
       { path: 'inmuebles', element: <InmueblesPage /> },
+      { path: 'alertas', element: <AlertasPage /> },
       { path: 'egresos', element: <EgresosPage /> },
       { path: 'arrendadores', element: <ArrendadoresPage /> },
       { path: 'arrendatarios', element: <ArrendatariosPage /> },

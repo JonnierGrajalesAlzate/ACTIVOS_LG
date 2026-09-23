@@ -1,4 +1,4 @@
-import { apiGet } from './client';
+import { apiGet, apiPost } from './client';
 
 export interface InmuebleListItem {
   id: number;
@@ -67,4 +67,8 @@ export function fetchInmuebles(query: InmueblesQuery): Promise<InmueblesResponse
 
 export function fetchProyectos(): Promise<Proyecto[]> {
   return apiGet<Proyecto[]>('/api/inmuebles/proyectos');
+}
+
+export function createProyecto(nombre: string): Promise<Proyecto> {
+  return apiPost<Proyecto>('/api/inmuebles/proyectos', { nombre });
 }

@@ -2,6 +2,7 @@
   flex-shrink: 0;
   background: var(--surface);
   border-right: 1px solid var(--line);
+  box-shadow: var(--shadow-panel);
   display: flex;
   flex-direction: column;
   position: sticky;
@@ -10,6 +11,7 @@
   overflow: hidden;
   box-sizing: border-box;
   transition: width 0.2s ease;
+  z-index: 1;
 }
 
 .collapsed {
@@ -134,6 +136,7 @@
   color: var(--ink-2);
   text-decoration: none;
   white-space: nowrap;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
 }
 
 .collapsed .row {

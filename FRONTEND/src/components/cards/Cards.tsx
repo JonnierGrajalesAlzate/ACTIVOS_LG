@@ -1,5 +1,7 @@
-import { AlertOctagon, AlertTriangle, Info } from 'lucide-react';
+import { AlertOctagon, AlertTriangle, Building2, Info } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { ProgressBar } from '../progress/ProgressBar';
+import { occupancyColor } from '../../utils/colors';
 import styles from './Cards.module.css';
 
 export function SectionTitle({ children }: { children: ReactNode }) {
@@ -38,6 +40,39 @@ export function AlertCard({ titulo, contexto, motivo, detalle, severidad }: Aler
         <div className={styles.alertDetail}>{detalle}</div>
       </div>
     </div>
+  );
+}
+
+interface ProjectCardProps {
+  nombre: string;
+  inmuebles: number;
+  arrendados: number;
+  ocupacionPorcentaje: number;
+  canonMensual: string;
+  onClick?: () => void;
+}
+
+export function ProjectCard({ nombre, inmuebles, arrendados, ocupacionPorcentaje, canonMensual, onClick }: ProjectCardProps) {
+  const tone = occupancyColor(ocupacionPorcentaje);
+  return (
+    <button type="button" className={styles.projectCard} onClick={onClick}>
+      <div className={styles.projectCardTop}>
+        <span className={styles.projectCardIcon}>
+          <Building2 size={18} strokeWidth={2} />
+        </span>
+        <span className={styles.projectCardName} title={nombre}>
+          {nombre}
+        </span>
+      </div>
+      <div className={styles.projectCardCanon}>{canonMensual}</div>
+      <ProgressBar value={ocupacionPorcentaje} height={6} color={tone} />
+      <div className={styles.projectCardMeta}>
+        <span>{ocupacionPorcentaje}% ocupado</span>
+        <span>
+          {arrendados}/{inmuebles} inmuebles
+        </span>
+      </div>
+    </button>
   );
 }
 

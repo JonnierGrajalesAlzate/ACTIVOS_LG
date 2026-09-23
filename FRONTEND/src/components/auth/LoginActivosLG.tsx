@@ -1,5 +1,6 @@
 import { useEffect, useState, type CSSProperties, type FormEvent, type MouseEvent } from 'react';
-import logoUrl from '../../assets/logoLG.png';
+import logoUrl from '../../assets/logo.png';
+import AnimatedGradient, { type GradientConfig } from '../ui/animated-gradient';
 
 export interface LoginActivosLGCredentials {
   usuario: string;
@@ -15,18 +16,11 @@ export interface LoginActivosLGProps {
 
 const FONT_FAMILY = "'Archivo', sans-serif";
 
+// Constantes a nivel de modulo: AnimatedGradient reconstruye el contexto WebGL si cambia la referencia de config.
+const GRADIENT_CONFIG: GradientConfig = { preset: 'Prism' };
+const GRADIENT_CONFIG_STATIC: GradientConfig = { preset: 'Prism', speed: 0 };
+
 const KEYFRAMES = `
-@keyframes glow {
-  0%, 100% { transform: translate(0, 0) scale(1); opacity: .55; }
-  50% { transform: translate(40px, -30px) scale(1.18); opacity: .85; }
-}
-@keyframes drift {
-  to { transform: translate(-120px, -120px); }
-}
-@keyframes twinkle {
-  0%, 100% { opacity: .25; }
-  50% { opacity: 1; }
-}
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(14px); }
   to { opacity: 1; transform: translateY(0); }
@@ -36,24 +30,6 @@ const KEYFRAMES = `
   50% { transform: translateY(-7px); }
 }
 `;
-
-interface Building {
-  height: number;
-  width: number;
-  windows?: number;
-}
-
-const BUILDINGS: Building[] = [
-  { height: 120, width: 44 },
-  { height: 186, width: 56, windows: 9 },
-  { height: 96, width: 38 },
-  { height: 212, width: 64, windows: 12 },
-  { height: 140, width: 46 },
-  { height: 170, width: 52 },
-  { height: 104, width: 36 },
-];
-
-const TWINKLE_DELAYS = [0.4, 0.9, 1.4, 1.9, 2.4, 2.9, 3.4, 3.9];
 
 function useReducedMotion(): boolean {
   const [reduced, setReduced] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -83,8 +59,6 @@ export function LoginActivosLG({ onSubmit, onForgotPassword, errorMessage, submi
   const [showPassword, setShowPassword] = useState(false);
   const [toggleHover, setToggleHover] = useState(false);
 
-  let windowCounter = 0;
-
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     onSubmit?.({ usuario, password });
@@ -113,67 +87,14 @@ export function LoginActivosLG({ onSubmit, onForgotPassword, errorMessage, submi
   };
 
   const leftPanelStyle: CSSProperties = {
-    background: '#0b2545',
+    // Fondo solido de respaldo si el navegador no soporta WebGL2.
+    background: '#050505',
     position: 'relative',
+    isolation: 'isolate',
     overflow: 'hidden',
     padding: '0 68px',
     display: 'flex',
     alignItems: 'center',
-  };
-
-  const glow1Style: CSSProperties = {
-    position: 'absolute',
-    width: 560,
-    height: 560,
-    left: -120,
-    top: -100,
-    borderRadius: '50%',
-    background: 'radial-gradient(circle, rgba(79, 177, 238, 0.42), rgba(79, 177, 238, 0) 68%)',
-    ...(reduced ? {} : { animation: 'glow 14s ease-in-out infinite' }),
-  };
-
-  const glow2Style: CSSProperties = {
-    position: 'absolute',
-    width: 520,
-    height: 520,
-    right: -160,
-    bottom: -180,
-    borderRadius: '50%',
-    background: 'radial-gradient(circle, rgba(15, 134, 214, 0.34), rgba(15, 134, 214, 0) 70%)',
-    ...(reduced ? {} : { animation: 'glow 18s ease-in-out 3s infinite' }),
-  };
-
-  const gridLayerStyle: CSSProperties = {
-    position: 'absolute',
-    inset: -140,
-    backgroundImage:
-      'linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px)',
-    backgroundSize: '56px 56px',
-    ...(reduced ? {} : { animation: 'drift 26s linear infinite' }),
-  };
-
-  const skylineStyle: CSSProperties = {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 230,
-    display: 'flex',
-    alignItems: 'flex-end',
-    gap: 12,
-    padding: '0 40px',
-    opacity: 0.5,
-  };
-
-  const fadeOverlayStyle: CSSProperties = {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 180,
-    background: 'linear-gradient(to top, rgba(11, 37, 69, 0.95), rgba(11, 37, 69, 0))',
-    zIndex: 1,
-    pointerEvents: 'none',
   };
 
   const contentColumnStyle: CSSProperties = {
@@ -184,33 +105,20 @@ export function LoginActivosLG({ onSubmit, onForgotPassword, errorMessage, submi
     gap: 26,
   };
 
-  const isotypeWrapStyle: CSSProperties = {
-    position: 'relative',
-    width: 196,
-    height: 152,
-    ...fadeUp(0, reduced),
+  const logoWrapAnimation = [fadeUp(0, reduced).animation, reduced ? null : 'float 6s ease-in-out infinite']
+    .filter(Boolean)
+    .join(', ');
+
+  const logoWrapStyle: CSSProperties = {
+    display: 'inline-flex',
+    ...(logoWrapAnimation ? { animation: logoWrapAnimation } : {}),
   };
 
-  const sealStyle: CSSProperties = {
-    position: 'absolute',
-    left: 140,
-    top: 98,
-    width: 46,
-    height: 46,
-    borderRadius: '50%',
-    background: '#0f86d6',
-    border: '3px solid #0b2545',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...(reduced ? {} : { animation: 'float 6s ease-in-out infinite' }),
-  };
-
-  const sealImgStyle: CSSProperties = {
-    width: 26,
-    height: 26,
+  const logoImgStyle: CSSProperties = {
+    height: 110,
+    width: 'auto',
+    display: 'block',
     objectFit: 'contain',
-    filter: 'brightness(0) invert(1)',
   };
 
   const wordmarkWrapStyle: CSSProperties = fadeUp(0.12, reduced);
@@ -374,99 +282,11 @@ export function LoginActivosLG({ onSubmit, onForgotPassword, errorMessage, submi
 
       <div style={cardStyle}>
         <div style={leftPanelStyle}>
-          <div style={glow1Style} aria-hidden="true" />
-          <div style={glow2Style} aria-hidden="true" />
-          <div style={gridLayerStyle} aria-hidden="true" />
-
-          <div style={skylineStyle} aria-hidden="true">
-            {BUILDINGS.map((building, i) => {
-              const color = i % 2 === 0 ? '#123256' : '#163a63';
-              const hasWindows = Boolean(building.windows);
-              const buildingStyle: CSSProperties = {
-                height: building.height,
-                width: building.width,
-                background: color,
-                borderRadius: '3px 3px 0 0',
-                ...(hasWindows
-                  ? {
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(3, 1fr)',
-                      gap: 7,
-                      alignContent: 'start',
-                      padding: 8,
-                      boxSizing: 'border-box',
-                    }
-                  : {}),
-              };
-
-              return (
-                <div key={i} style={buildingStyle}>
-                  {hasWindows &&
-                    Array.from({ length: building.windows! }).map((_, wi) => {
-                      const delay = TWINKLE_DELAYS[windowCounter % TWINKLE_DELAYS.length];
-                      const duration = windowCounter % 2 === 0 ? 5 : 6;
-                      windowCounter += 1;
-                      const windowStyle: CSSProperties = {
-                        width: 9,
-                        height: 9,
-                        background: '#4fb1ee',
-                        ...(reduced ? { opacity: 0.7 } : { animation: `twinkle ${duration}s ease-in-out ${delay}s infinite` }),
-                      };
-                      return <span key={wi} style={windowStyle} />;
-                    })}
-                </div>
-              );
-            })}
-          </div>
-
-          <div style={fadeOverlayStyle} aria-hidden="true" />
+          <AnimatedGradient config={reduced ? GRADIENT_CONFIG_STATIC : GRADIENT_CONFIG} />
 
           <div style={contentColumnStyle}>
-            <div style={isotypeWrapStyle}>
-              <svg width={196} height={152} viewBox="0 0 228 176" fill="none">
-                <rect x={122} y={44} width={22} height={74} rx={3} fill="#4fb1ee" />
-                <rect x={148} y={20} width={31} height={98} rx={3} fill="#0f86d6" />
-                <rect x={183} y={56} width={24} height={62} rx={3} fill="#ffffff" />
-
-                <rect x={155} y={30} width={6} height={9} rx={1} fill="#ffffff" />
-                <rect x={166} y={30} width={6} height={9} rx={1} fill="#ffffff" />
-                <rect x={155} y={46} width={6} height={9} rx={1} fill="#ffffff" />
-                <rect x={166} y={46} width={6} height={9} rx={1} fill="#ffffff" />
-                <rect x={155} y={62} width={6} height={9} rx={1} fill="#ffffff" />
-                <rect x={166} y={62} width={6} height={9} rx={1} fill="#ffffff" />
-                <rect x={155} y={78} width={6} height={9} rx={1} fill="#ffffff" />
-                <rect x={166} y={78} width={6} height={9} rx={1} fill="#ffffff" />
-
-                <rect x={128} y={54} width={6} height={9} rx={1} fill="#ffffff" opacity={0.85} />
-                <rect x={128} y={70} width={6} height={9} rx={1} fill="#ffffff" opacity={0.85} />
-
-                <rect x={190} y={66} width={6} height={9} rx={1} fill="#0b2545" />
-                <rect x={190} y={82} width={6} height={9} rx={1} fill="#0b2545" />
-
-                <path
-                  d="M24 58C6 98 18 140 60 151C90 158 120 154 144 144"
-                  fill="none"
-                  stroke="#1b8fe3"
-                  strokeWidth={15}
-                  strokeLinecap="round"
-                />
-
-                <path
-                  d="M44 116L82 84L120 116"
-                  fill="none"
-                  stroke="#ffffff"
-                  strokeWidth={13}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <rect x={73} y={100} width={18} height={18} rx={2} fill="#ffffff" />
-                <rect x={81} y={100} width={2} height={18} fill="#0b2545" />
-                <rect x={73} y={108} width={18} height={2} fill="#0b2545" />
-              </svg>
-
-              <div style={sealStyle}>
-                <img src={logoUrl} alt="" style={sealImgStyle} />
-              </div>
+            <div style={logoWrapStyle}>
+              <img src={logoUrl} alt="Activos LG" style={logoImgStyle} />
             </div>
 
             <div style={wordmarkWrapStyle}>

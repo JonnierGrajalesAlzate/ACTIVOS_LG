@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import type { CSSProperties } from 'react';
 import { fetchReportes } from '../api/resumen';
 import { SectionTitle } from '../components/cards/Cards';
 import { DistributionBars, YearColumns } from '../components/charts/Charts';
@@ -20,6 +21,14 @@ export function ReportesPage() {
 
   const totalEgresos = (data?.composicionEgresos ?? []).reduce((a, c) => a + c.valor, 0);
 
+  const panelStyle: CSSProperties = {
+    background: 'var(--surface)',
+    border: '1px solid var(--line)',
+    borderRadius: 18,
+    padding: '22px 24px',
+    boxShadow: 'var(--shadow-xs)',
+  };
+
   return (
     <div>
       <Header meta={pageMeta.reportes} />
@@ -32,14 +41,15 @@ export function ReportesPage() {
           fontSize: 13,
           color: 'var(--ink-3)',
           marginBottom: 26,
+          boxShadow: 'var(--shadow-xs)',
         }}
       >
         Los informes son agregaciones del estado actual del portafolio. La base de datos no
         guarda historico mensual, por lo que no hay series de tiempo todavia.
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, marginBottom: 32 }}>
-        <section>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 24 }}>
+        <section style={panelStyle}>
           <SectionTitle>Canon mensual por proyecto</SectionTitle>
           {isLoading ? (
             <ChartSkeleton />
@@ -56,7 +66,7 @@ export function ReportesPage() {
           )}
         </section>
 
-        <section>
+        <section style={panelStyle}>
           <SectionTitle>Composicion de egresos mensuales</SectionTitle>
           {isLoading ? (
             <ChartSkeleton />
@@ -76,8 +86,8 @@ export function ReportesPage() {
         </section>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
-        <section>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+        <section style={panelStyle}>
           <SectionTitle>Canon por tipo de inmueble</SectionTitle>
           {isLoading ? (
             <ChartSkeleton />
@@ -94,7 +104,7 @@ export function ReportesPage() {
           )}
         </section>
 
-        <section>
+        <section style={panelStyle}>
           <SectionTitle>Contratos que vencen por anio</SectionTitle>
           {isLoading ? (
             <ChartSkeleton />

@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { fetchInmuebles, type InmuebleListItem } from '../api/inmuebles';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { ArrowLeft, X } from 'lucide-react';
+import { fetchInmuebles, fetchProyectos, type InmuebleListItem } from '../api/inmuebles';
 import { FilterChipRow, type ChipOption } from '../components/filters/FilterChipRow';
 import { Header } from '../components/layout/Header';
 import { KpiStrip } from '../components/kpi/KpiStrip';
@@ -28,6 +30,10 @@ function estadoColor(estado: string): string {
 }
 
 export function InmueblesPage() {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const proyectoId = searchParams.get('proyecto') ? Number(searchParams.get('proyecto')) : undefined;
+
   const [search, setSearch] = useState('');
   const [estado, setEstado] = useState<string>(TODOS);
   const [page, setPage] = useState(1);
@@ -36,10 +42,14 @@ export function InmueblesPage() {
 
   const debouncedSearch = useDebouncedValue(search, 250);
 
+  const { data: proyectos } = useQuery({ queryKey: ['proyectos'], queryFn: fetchProyectos });
+  const proyectoNombre = proyectos?.find((p) => p.id === proyectoId)?.nombre;
+
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['inmuebles', { debouncedSearch, estado, page, sortField, sortDir }],
+    queryKey: ['inmuebles', { proyectoId, debouncedSearch, estado, page, sortField, sortDir }],
     queryFn: () =>
       fetchInmuebles({
+        proyecto: proyectoId,
         q: debouncedSearch || undefined,
         estado: estado === TODOS ? undefined : estado,
         pagina: page,
@@ -48,6 +58,15 @@ export function InmueblesPage() {
         dir: sortDir,
       }),
   });
+
+  const clearProyecto = () => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete('proyecto');
+      return next;
+    });
+    setPage(1);
+  };
 
   const handleSortChange = (field: string) => {
     if (field === sortField) {
@@ -98,6 +117,62 @@ export function InmueblesPage() {
   return (
     <div>
       <Header meta={pageMeta.inmuebles} searchValue={search} onSearchChange={setSearch} />
+
+      {proyectoId !== undefined && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+          <button
+            type="button"
+            onClick={() => navigate('/inicio')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'var(--accent)',
+              fontSize: 13,
+              fontWeight: 700,
+              padding: 0,
+            }}
+          >
+            <ArrowLeft size={16} strokeWidth={2.2} />
+            Volver a proyectos
+          </button>
+
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '8px 14px',
+              width: 'fit-content',
+              background: 'var(--fill)',
+              borderRadius: 999,
+              fontSize: 13,
+              fontWeight: 600,
+            }}
+          >
+            <span>Proyecto: {proyectoNombre ?? `#${proyectoId}`}</span>
+            <button
+              type="button"
+              onClick={clearProyecto}
+              aria-label="Quitar filtro de proyecto"
+              style={{
+                display: 'grid',
+                placeItems: 'center',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--ink-3)',
+                padding: 2,
+              }}
+            >
+              <X size={15} strokeWidth={2.2} />
+            </button>
+          </div>
+        </div>
+      )}
 
       <KpiStrip
         items={[

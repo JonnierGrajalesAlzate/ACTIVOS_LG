@@ -7,6 +7,13 @@
   flex-direction: column;
   gap: 14px;
   min-width: 0;
+  box-shadow: var(--shadow-xs);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
 }
 
 .top {

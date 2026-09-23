@@ -1,29 +1,72 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Banknote, DoorOpen, PieChart, Receipt } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { fetchResumen } from '../api/resumen';
-import { AlertCard, SectionTitle } from '../components/cards/Cards';
+import { ProjectCard, SectionTitle } from '../components/cards/Cards';
 import { OccupancyRing } from '../components/charts/OccupancyRing';
 import { Header } from '../components/layout/Header';
 import { StatCard } from '../components/kpi/StatCard';
 import { ProgressBar } from '../components/progress/ProgressBar';
+import { NuevoProyectoModal } from '../components/proyectos/NuevoProyectoModal';
 import { pageMeta } from '../nav/navConfig';
 import styles from './InicioPage.module.css';
 import { formatArea, formatCurrencyCompact } from '../utils/format';
+import { occupancyColor } from '../utils/colors';
+import { matchesSearch } from '../utils/text';
 
 export function InicioPage() {
   const { data, isLoading, isError } = useQuery({ queryKey: ['resumen'], queryFn: fetchResumen });
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [showNuevoProyecto, setShowNuevoProyecto] = useState(false);
+  const [search, setSearch] = useState('');
   const k = data?.kpis;
   const ocupacion = k?.ocupacionPorcentaje ?? 0;
-  const ocupacionTone = ocupacion >= 90 ? 'var(--ok)' : ocupacion >= 70 ? 'var(--warn)' : 'var(--danger)';
+  const ocupacionTone = occupancyColor(ocupacion);
+
+  const proyectos = data?.ocupacionPorProyecto ?? [];
+  const proyectosFiltrados = proyectos.filter((p) => matchesSearch(p.proyecto, search));
 
   return (
     <div>
-      <Header meta={pageMeta.inicio} />
+      <Header
+        meta={pageMeta.inicio}
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Buscar proyecto..."
+        onAction={() => setShowNuevoProyecto(true)}
+      />
 
       {isError ? (
         <div style={{ padding: 24, color: 'var(--danger)' }}>No se pudo cargar el resumen del portafolio.</div>
       ) : (
         <>
+          <SectionTitle>Proyectos</SectionTitle>
+          <div className={styles.projectsGrid}>
+            {isLoading &&
+              Array.from({ length: 4 }).map((_, i) => <div key={`psk-${i}`} className={styles.projectSkeleton} />)}
+            {!isLoading &&
+              proyectosFiltrados.map((p) => (
+                <ProjectCard
+                  key={p.id}
+                  nombre={p.proyecto}
+                  inmuebles={p.inmuebles}
+                  arrendados={p.arrendados}
+                  ocupacionPorcentaje={p.ocupacionPorcentaje}
+                  canonMensual={formatCurrencyCompact(p.canonMensual)}
+                  onClick={() => navigate(`/inmuebles?proyecto=${p.id}`)}
+                />
+              ))}
+            {!isLoading && proyectos.length === 0 && (
+              <div className={styles.emptyState}>Aun no hay proyectos registrados.</div>
+            )}
+            {!isLoading && proyectos.length > 0 && proyectosFiltrados.length === 0 && (
+              <div className={styles.emptyState}>Ningun proyecto coincide con "{search}".</div>
+            )}
+          </div>
+
+          <SectionTitle>Indicadores del portafolio</SectionTitle>
           <div className={styles.kpiGrid}>
             <StatCard
               icon={Banknote}
@@ -42,7 +85,7 @@ export function InicioPage() {
             <StatCard
               icon={PieChart}
               label="Ocupacion"
-              tone={ocupacion >= 90 ? 'ok' : ocupacion >= 70 ? 'warn' : 'danger'}
+              tone="accent"
               value={`${ocupacion}%`}
               help={`${k?.arrendados ?? 0} de ${k?.totalInmuebles ?? 0} predios`}
             >
@@ -57,30 +100,7 @@ export function InicioPage() {
             />
           </div>
 
-          <div className={styles.mainGrid}>
-            <div className={styles.panel}>
-              <SectionTitle>Requiere tu atencion</SectionTitle>
-              <div className={styles.alertList}>
-                {isLoading && Array.from({ length: 4 }).map((_, i) => <div key={`sk-${i}`} className={styles.skeleton} />)}
-                {!isLoading &&
-                  (data?.alertas ?? []).map((a, i) => (
-                    <AlertCard
-                      key={`${a.tipo}-${a.titulo}-${i}`}
-                      titulo={a.titulo}
-                      contexto={a.contexto}
-                      motivo={a.motivo}
-                      detalle={a.detalle}
-                      severidad={a.severidad}
-                    />
-                  ))}
-                {!isLoading && (data?.alertas.length ?? 0) === 0 && (
-                  <div className={styles.emptyState}>
-                    Sin alertas: ningun contrato vence en los proximos 90 dias y ningun inmueble esta en perdida.
-                  </div>
-                )}
-              </div>
-            </div>
-
+          <div className={styles.occupancyWrap}>
             <div className={styles.panel}>
               <SectionTitle>Ocupacion del portafolio</SectionTitle>
 
@@ -97,30 +117,19 @@ export function InicioPage() {
                   </span>
                 </div>
               </div>
-
-              <SectionTitle>Por proyecto</SectionTitle>
-              <div className={styles.projectList}>
-                {(data?.ocupacionPorProyecto ?? []).map((p) => (
-                  <div key={p.proyecto}>
-                    <div className={styles.projectHead}>
-                      <span className={styles.projectName} title={p.proyecto}>
-                        {p.proyecto}
-                      </span>
-                      <span className={styles.projectMeta}>
-                        {p.ocupacionPorcentaje}% · {p.inmuebles}
-                      </span>
-                    </div>
-                    <ProgressBar
-                      value={p.ocupacionPorcentaje}
-                      height={8}
-                      color={p.ocupacionPorcentaje < 100 ? 'var(--danger)' : 'var(--accent)'}
-                    />
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
         </>
+      )}
+
+      {showNuevoProyecto && (
+        <NuevoProyectoModal
+          onClose={() => setShowNuevoProyecto(false)}
+          onCreated={() => {
+            queryClient.invalidateQueries({ queryKey: ['resumen'] });
+            queryClient.invalidateQueries({ queryKey: ['proyectos'] });
+          }}
+        />
       )}
     </div>
   );

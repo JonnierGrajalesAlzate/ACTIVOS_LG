@@ -1,5 +1,12 @@
 .tableWrap {
   width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 6px 22px;
+  box-shadow: var(--shadow-xs);
+  box-sizing: border-box;
+  overflow-x: auto;
 }
 
 .table {
@@ -9,21 +16,13 @@
 
 .th {
   text-align: left;
-  padding: 11px 12px;
+  padding: 13px 12px;
   font-size: 10.5px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-4);
   font-weight: 700;
   white-space: nowrap;
-}
-
-.th:first-child {
-  padding-left: 0;
-}
-
-.th:last-child {
-  padding-right: 0;
 }
 
 .thRight {
@@ -36,29 +35,28 @@
 }
 
 .td {
-  padding: 11px 12px;
+  padding: 13px 12px;
   border-top: 1px solid var(--line-2);
   font-size: 13.5px;
   color: var(--ink-2);
 }
 
 .td:first-child {
-  padding-left: 0;
   font-size: 14px;
   font-weight: 700;
   color: var(--ink);
-}
-
-.td:last-child {
-  padding-right: 0;
 }
 
 .tdRight {
   text-align: right;
 }
 
+.row {
+  transition: background 0.12s;
+}
+
 .row:hover .td {
-  background: rgba(75, 63, 212, 0.03);
+  background: rgba(75, 63, 212, 0.04);
 }
 
 .empty {

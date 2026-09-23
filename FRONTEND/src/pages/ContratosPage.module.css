@@ -13,6 +13,12 @@
   align-items: center;
   gap: 20px;
   flex-wrap: wrap;
+  box-shadow: var(--shadow-xs);
+  transition: box-shadow 0.2s;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-sm);
 }
 
 .inmueble {

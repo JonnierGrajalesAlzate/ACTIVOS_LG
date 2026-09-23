@@ -12,6 +12,7 @@ export interface ResumenKpis {
 }
 
 export interface OcupacionProyecto {
+  id: number;
   proyecto: string;
   inmuebles: number;
   arrendados: number;

@@ -30,23 +30,23 @@ public static class ResumenEndpoints
                 canonMensual, egresosMensuales, ebitdaMensual, ocupacion,
                 totalInmuebles, arrendados, disponibles, areaTotal);
 
-            // Ocupacion por proyecto. Se agrupa a tipo anonimo: EF no traduce la
-            // construccion posicional de un record dentro del Select sobre el grupo.
-            var porProyectoRaw = await db.Inmuebles
-                .GroupBy(i => i.IdProyectoNavigation.Nombre)
-                .Select(g => new
+            // Se parte de Proyectos (no de Inmuebles) para que un proyecto recien
+            // creado, aun sin inmuebles, aparezca igual en el listado.
+            var porProyectoRaw = await db.Proyectos
+                .Select(p => new
                 {
-                    Proyecto = g.Key,
-                    Inmuebles = g.Count(),
-                    Arrendados = g.Count(i => i.IdEstadoNavigation.Descripcion == EstadoArrendado),
-                    Canon = g.Sum(i => (decimal?)i.ContratosArrendamientos
+                    p.Id,
+                    Proyecto = p.Nombre,
+                    Inmuebles = p.Inmuebles.Count,
+                    Arrendados = p.Inmuebles.Count(i => i.IdEstadoNavigation.Descripcion == EstadoArrendado),
+                    Canon = p.Inmuebles.Sum(i => (decimal?)i.ContratosArrendamientos
                         .Sum(c => (decimal?)c.CanonActualMensual)) ?? 0m
                 })
                 .ToListAsync();
 
             var ocupacionPorProyecto = porProyectoRaw
                 .Select(x => new OcupacionProyectoDto(
-                    x.Proyecto, x.Inmuebles, x.Arrendados,
+                    x.Id, x.Proyecto, x.Inmuebles, x.Arrendados,
                     x.Inmuebles == 0 ? 0m : Math.Round(x.Arrendados * 100m / x.Inmuebles, 1),
                     x.Canon))
                 .OrderByDescending(x => x.CanonMensual)

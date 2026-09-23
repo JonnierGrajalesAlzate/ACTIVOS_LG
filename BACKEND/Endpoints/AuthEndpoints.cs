@@ -40,6 +40,33 @@ public static class AuthEndpoints
         .AllowAnonymous()
         .WithName("Login");
 
+        group.MapPost("/reset-password", async (ResetPasswordRequestDto request, ApplicationDbContext db) =>
+        {
+            var email = request.Email?.Trim().ToLowerInvariant();
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(request.NewPassword))
+            {
+                return Results.BadRequest(new { message = "Email y nueva contrasena son obligatorios." });
+            }
+
+            if (request.NewPassword.Length < 6)
+            {
+                return Results.BadRequest(new { message = "La nueva contrasena debe tener al menos 6 caracteres." });
+            }
+
+            var usuario = await db.Usuarios.FirstOrDefaultAsync(u => u.Email == email && u.Activo);
+            if (usuario is null)
+            {
+                return Results.NotFound(new { message = "No existe una cuenta activa con ese email." });
+            }
+
+            usuario.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            await db.SaveChangesAsync();
+
+            return Results.Ok(new { message = "Contrasena actualizada correctamente." });
+        })
+        .AllowAnonymous()
+        .WithName("ResetPassword");
+
         group.MapGet("/me", (ClaimsPrincipal user) =>
         {
             var id = int.Parse(user.FindFirstValue(JwtRegisteredClaimNames.Sub)!);
