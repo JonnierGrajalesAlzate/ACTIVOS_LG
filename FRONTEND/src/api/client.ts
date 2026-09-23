@@ -39,6 +39,16 @@ export async function apiGet<T>(path: string, params?: Record<string, string | n
   return handleResponse<T>(res, path, 'expire');
 }
 
+export async function apiPut<T>(path: string, body: unknown): Promise<T> {
+  const url = new URL(path, API_BASE_URL);
+  const res = await fetch(url, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(body),
+  });
+  return handleResponse<T>(res, path, 'expire');
+}
+
 export async function apiPost<T>(path: string, body?: unknown, options?: { authRequired?: boolean }): Promise<T> {
   const authRequired = options?.authRequired ?? true;
   const url = new URL(path, API_BASE_URL);

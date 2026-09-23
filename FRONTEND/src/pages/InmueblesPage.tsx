@@ -2,14 +2,15 @@ import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, X } from 'lucide-react';
-import { fetchInmuebles, fetchProyectos, type InmuebleListItem } from '../api/inmuebles';
+import { fetchEtapas, fetchInmuebles, fetchProyectos, type InmuebleListItem } from '../api/inmuebles';
 import { FilterChipRow, type ChipOption } from '../components/filters/FilterChipRow';
 import { Header } from '../components/layout/Header';
 import { KpiStrip } from '../components/kpi/KpiStrip';
 import { Pagination } from '../components/pagination/Pagination';
 import { DataTable, type DataTableColumn } from '../components/table/DataTable';
 import { pageMeta } from '../nav/navConfig';
-import { formatArea, formatCurrency, formatCurrencyCompact, formatDate } from '../utils/format';
+import { DIAS_ALERTA_VENCIMIENTO } from '../api/resumen';
+import { formatArea, formatCurrency, formatCurrencyCompact, formatDate, formatPercent } from '../utils/format';
 import { useDebouncedValue } from '../utils/useDebouncedValue';
 
 const TODOS = '__todos__';
@@ -33,6 +34,8 @@ export function InmueblesPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const proyectoId = searchParams.get('proyecto') ? Number(searchParams.get('proyecto')) : undefined;
+  // La etapa vive en la URL junto al proyecto para que el filtro sobreviva recargas y se pueda compartir.
+  const etapaId = proyectoId !== undefined && searchParams.get('etapa') ? Number(searchParams.get('etapa')) : undefined;
 
   const [search, setSearch] = useState('');
   const [estado, setEstado] = useState<string>(TODOS);
@@ -45,11 +48,20 @@ export function InmueblesPage() {
   const { data: proyectos } = useQuery({ queryKey: ['proyectos'], queryFn: fetchProyectos });
   const proyectoNombre = proyectos?.find((p) => p.id === proyectoId)?.nombre;
 
+  const { data: proyectoEtapas } = useQuery({
+    queryKey: ['etapas', proyectoId],
+    queryFn: () => fetchEtapas(proyectoId!),
+    enabled: proyectoId !== undefined,
+  });
+  const etapas = proyectoEtapas?.etapas ?? [];
+  const etapaNombre = etapas.find((e) => e.id === etapaId)?.nombre;
+
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['inmuebles', { proyectoId, debouncedSearch, estado, page, sortField, sortDir }],
+    queryKey: ['inmuebles', { proyectoId, etapaId, debouncedSearch, estado, page, sortField, sortDir }],
     queryFn: () =>
       fetchInmuebles({
         proyecto: proyectoId,
+        etapa: etapaId,
         q: debouncedSearch || undefined,
         estado: estado === TODOS ? undefined : estado,
         pagina: page,
@@ -63,6 +75,17 @@ export function InmueblesPage() {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
       next.delete('proyecto');
+      next.delete('etapa');
+      return next;
+    });
+    setPage(1);
+  };
+
+  const setEtapa = (value: string) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (value === TODOS) next.delete('etapa');
+      else next.set('etapa', value);
       return next;
     });
     setPage(1);
@@ -80,10 +103,31 @@ export function InmueblesPage() {
 
   const columns: DataTableColumn<InmuebleListItem>[] = [
     { key: 'nombre', header: 'Inmueble', render: (r) => r.nombre },
-    { key: 'proyecto', header: 'Proyecto', sortable: true, render: (r) => r.proyecto },
+    {
+      key: 'proyecto',
+      header: 'Proyecto',
+      sortable: true,
+      render: (r) =>
+        r.etapa ? (
+          <>
+            {r.proyecto} <span style={{ color: 'var(--ink-3)' }}>· {r.etapa}</span>
+          </>
+        ) : (
+          r.proyecto
+        ),
+    },
     { key: 'arrendatario', header: 'Arrendatario', render: (r) => r.arrendatario ?? '—' },
     { key: 'area', header: 'Area', align: 'right', sortable: true, render: (r) => formatArea(r.areaM2) },
     { key: 'canon', header: 'Canon', align: 'right', sortable: true, render: (r) => formatCurrency(r.canonMensual) },
+    {
+      key: 'rental',
+      header: 'Rental rate',
+      align: 'right',
+      sortable: true,
+      render: (r) => (
+        <span title="Canon mensual / valor comercial">{formatPercent(r.rentalRate)}</span>
+      ),
+    },
     {
       key: 'vence',
       header: 'Vence',
@@ -114,6 +158,11 @@ export function InmueblesPage() {
     ...(data?.estados ?? []).map((e) => ({ value: e.estado, label: `${e.estado} · ${e.conteo}` })),
   ];
 
+  const etapaOptions: ChipOption<string>[] = [
+    { value: TODOS, label: `Todas las etapas · ${etapas.reduce((acc, e) => acc + e.inmuebles, 0)}` },
+    ...etapas.map((e) => ({ value: String(e.id), label: `${e.nombre} · ${e.inmuebles}` })),
+  ];
+
   return (
     <div>
       <Header meta={pageMeta.inmuebles} searchValue={search} onSearchChange={setSearch} />
@@ -122,7 +171,7 @@ export function InmueblesPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
           <button
             type="button"
-            onClick={() => navigate('/inicio')}
+            onClick={() => navigate(etapas.length > 0 ? `/inicio/proyectos/${proyectoId}` : '/inicio')}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -137,7 +186,7 @@ export function InmueblesPage() {
             }}
           >
             <ArrowLeft size={16} strokeWidth={2.2} />
-            Volver a proyectos
+            {etapas.length > 0 ? 'Volver a etapas' : 'Volver a proyectos'}
           </button>
 
           <div
@@ -153,7 +202,10 @@ export function InmueblesPage() {
               fontWeight: 600,
             }}
           >
-            <span>Proyecto: {proyectoNombre ?? `#${proyectoId}`}</span>
+            <span>
+              Proyecto: {proyectoNombre ?? `#${proyectoId}`}
+              {etapaNombre && ` · ${etapaNombre}`}
+            </span>
             <button
               type="button"
               onClick={clearProyecto}
@@ -179,14 +231,17 @@ export function InmueblesPage() {
           { label: 'Canon', value: formatCurrencyCompact(kpis?.canonMensualTotal ?? 0), tone: 'accent' },
           { label: 'Area', value: formatArea(kpis?.areaTotalM2 ?? 0) },
           { label: 'Ocupacion', value: `${kpis?.ocupacionPorcentaje ?? 0}%` },
-          { label: 'Vencen 90 d.', value: String(kpis?.vencenEn90Dias ?? 0) },
-          {
-            label: 'Contratos vencidos',
-            value: String(kpis?.contratosVencidos ?? 0),
-            tone: (kpis?.contratosVencidos ?? 0) > 0 ? 'danger' : undefined,
-          },
+          { label: `Vencen ${DIAS_ALERTA_VENCIMIENTO} d.`, value: String(kpis?.vencenEn120Dias ?? 0) },
         ]}
       />
+
+      {etapas && etapas.length > 0 && (
+        <FilterChipRow
+          options={etapaOptions}
+          value={etapaId !== undefined ? String(etapaId) : TODOS}
+          onChange={setEtapa}
+        />
+      )}
 
       <FilterChipRow
         options={estadoOptions}

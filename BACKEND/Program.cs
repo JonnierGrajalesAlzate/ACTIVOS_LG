@@ -84,5 +84,6 @@ app.MapArrendatariosEndpoints();
 app.MapContratosEndpoints();
 app.MapResumenEndpoints();
 app.MapReportesEndpoints();
+app.MapParametrosEndpoints();
 
 app.Run();

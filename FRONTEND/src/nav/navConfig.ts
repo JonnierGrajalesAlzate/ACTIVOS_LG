@@ -1,13 +1,11 @@
 import {
   BarChart3,
   Banknote,
-  Bell,
   Building2,
   FileText,
   FolderUp,
   LayoutGrid,
   Settings,
-  User,
   Users,
   type LucideIcon,
 } from 'lucide-react';
@@ -17,7 +15,7 @@ export type TabId =
   | 'inmuebles'
   | 'alertas'
   | 'egresos'
-  | 'arrendadores'
+  | 'propietarios'
   | 'arrendatarios'
   | 'contratos'
   | 'reportes'
@@ -35,10 +33,8 @@ export interface NavItem {
 export const navItems: NavItem[] = [
   { id: 'inicio', path: '/inicio', label: 'Inicio', icon: LayoutGrid, group: 'Portafolio' },
   { id: 'inmuebles', path: '/inmuebles', label: 'Inmuebles', icon: Building2, group: 'Portafolio' },
-  { id: 'alertas', path: '/alertas', label: 'Alertas', icon: Bell, group: 'Portafolio' },
   { id: 'egresos', path: '/egresos', label: 'Egresos', icon: Banknote, group: 'Portafolio' },
-  { id: 'arrendadores', path: '/arrendadores', label: 'Arrendadores', icon: Users, group: 'Contrapartes' },
-  { id: 'arrendatarios', path: '/arrendatarios', label: 'Arrendatarios', icon: User, group: 'Contrapartes' },
+  { id: 'propietarios', path: '/propietarios', label: 'Propietarios', icon: Users, group: 'Contrapartes' },
   { id: 'contratos', path: '/contratos', label: 'Contratos', icon: FileText, group: 'Contrapartes' },
   { id: 'reportes', path: '/reportes', label: 'Reportes', icon: BarChart3, group: 'Contrapartes' },
   { id: 'carga', path: '/carga', label: 'Cargar Excel', icon: FolderUp, group: 'Administracion' },
@@ -56,11 +52,11 @@ export interface PageMeta {
 export const pageMeta: Record<TabId, PageMeta> = {
   inicio: { title: 'Inicio', subtitle: '', actionLabel: '+ Registrar proyecto' },
   inmuebles: { title: 'Inmuebles', subtitle: 'Inventario de predios', actionLabel: '+ Registrar inmueble' },
-  alertas: { title: 'Alertas', subtitle: 'Contratos por vencer y vacantes en perdida', actionLabel: 'Actualizar' },
+  alertas: { title: 'Alertas', subtitle: 'Incrementos IPC, contratos por vencer y vacantes en perdida', actionLabel: 'Actualizar' },
   egresos: { title: 'Egresos', subtitle: 'Costo mensual por inmueble', actionLabel: '+ Registrar egreso' },
-  arrendadores: { title: 'Arrendadores', subtitle: 'Propietarios de los inmuebles', actionLabel: '+ Nuevo arrendador' },
+  propietarios: { title: 'Propietarios', subtitle: 'Dueños de los inmuebles', actionLabel: '+ Nuevo propietario' },
   arrendatarios: { title: 'Arrendatarios', subtitle: 'Contrapartes de arrendamiento', actionLabel: '+ Nuevo arrendatario' },
-  contratos: { title: 'Contratos', subtitle: 'Vigencia y vencimientos', actionLabel: '+ Nuevo contrato' },
+  contratos: { title: 'Contratos', subtitle: 'Vigencia, vencimientos y arrendatarios', actionLabel: '+ Nuevo contrato' },
   reportes: { title: 'Reportes', subtitle: 'Distribucion del portafolio y ocupacion', actionLabel: '+ Informe a medida' },
   carga: { title: 'Cargar Excel', subtitle: 'Importa inventario, contratos o egresos', actionLabel: 'Ver plantillas' },
   config: { title: 'Configuracion', subtitle: 'Organizacion, alertas y usuarios', actionLabel: 'Guardar cambios' },

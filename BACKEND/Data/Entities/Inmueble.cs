@@ -9,6 +9,8 @@ public partial class Inmueble
 
     public int IdProyecto { get; set; }
 
+    public int? IdEtapa { get; set; }
+
     public int IdEstado { get; set; }
 
     public int IdDestinacion { get; set; }
@@ -24,6 +26,9 @@ public partial class Inmueble
     public bool? Mesanine { get; set; }
 
     public int? Pisos { get; set; }
+
+    /// <summary>Nivel/piso donde esta el inmueble segun el Excel: "1", "-3", "M" (mezanine)...</summary>
+    public string? Nivel { get; set; }
 
     public decimal? AreaPiso1 { get; set; }
 
@@ -60,6 +65,8 @@ public partial class Inmueble
     public virtual Destinacion IdDestinacionNavigation { get; set; } = null!;
 
     public virtual Estado IdEstadoNavigation { get; set; } = null!;
+
+    public virtual Etapa? IdEtapaNavigation { get; set; }
 
     public virtual Proyecto IdProyectoNavigation { get; set; } = null!;
 

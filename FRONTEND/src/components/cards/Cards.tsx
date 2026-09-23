@@ -1,4 +1,4 @@
-import { AlertOctagon, AlertTriangle, Building2, Info } from 'lucide-react';
+import { AlertOctagon, AlertTriangle, Building2, Info, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { ProgressBar } from '../progress/ProgressBar';
 import { occupancyColor } from '../../utils/colors';
@@ -14,9 +14,11 @@ interface AlertCardProps {
   motivo: string;
   detalle: string;
   severidad: string;
+  /** Accion opcional bajo la alerta (p. ej. aplicar un incremento de canon). */
+  action?: ReactNode;
 }
 
-export function AlertCard({ titulo, contexto, motivo, detalle, severidad }: AlertCardProps) {
+export function AlertCard({ titulo, contexto, motivo, detalle, severidad, action }: AlertCardProps) {
   const tone = severidad === 'danger' ? 'var(--danger)' : severidad === 'warn' ? 'var(--warn)' : 'var(--ink-2)';
   const iconBg =
     severidad === 'danger' ? 'rgba(194, 64, 91, 0.12)' : severidad === 'warn' ? 'rgba(154, 107, 34, 0.12)' : 'var(--fill)';
@@ -39,6 +41,7 @@ export function AlertCard({ titulo, contexto, motivo, detalle, severidad }: Aler
         </div>
         <div className={styles.alertDetail}>{detalle}</div>
       </div>
+      {action && <div className={styles.alertAction}>{action}</div>}
     </div>
   );
 }
@@ -49,16 +52,25 @@ interface ProjectCardProps {
   arrendados: number;
   ocupacionPorcentaje: number;
   canonMensual: string;
+  icon?: LucideIcon;
   onClick?: () => void;
 }
 
-export function ProjectCard({ nombre, inmuebles, arrendados, ocupacionPorcentaje, canonMensual, onClick }: ProjectCardProps) {
+export function ProjectCard({
+  nombre,
+  inmuebles,
+  arrendados,
+  ocupacionPorcentaje,
+  canonMensual,
+  icon: Icon = Building2,
+  onClick,
+}: ProjectCardProps) {
   const tone = occupancyColor(ocupacionPorcentaje);
   return (
     <button type="button" className={styles.projectCard} onClick={onClick}>
       <div className={styles.projectCardTop}>
         <span className={styles.projectCardIcon}>
-          <Building2 size={18} strokeWidth={2} />
+          <Icon size={18} strokeWidth={2} />
         </span>
         <span className={styles.projectCardName} title={nombre}>
           {nombre}

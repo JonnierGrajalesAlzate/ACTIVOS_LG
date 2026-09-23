@@ -1,4 +1,7 @@
-import { apiGet } from './client';
+import { apiGet, apiPut } from './client';
+
+/** Horizonte (dias) para considerar un contrato "por vencer". Debe coincidir con Negocio.DiasAlertaVencimiento. */
+export const DIAS_ALERTA_VENCIMIENTO = 120;
 
 export interface ResumenKpis {
   canonMensual: number;
@@ -9,6 +12,8 @@ export interface ResumenKpis {
   arrendados: number;
   disponibles: number;
   areaTotalM2: number;
+  /** Suma del valor comercial de todos los inmuebles. */
+  valorPortafolio: number;
 }
 
 export interface OcupacionProyecto {
@@ -18,6 +23,7 @@ export interface OcupacionProyecto {
   arrendados: number;
   ocupacionPorcentaje: number;
   canonMensual: number;
+  etapas: number;
 }
 
 export interface Alerta {
@@ -27,6 +33,11 @@ export interface Alerta {
   motivo: string;
   detalle: string;
   severidad: 'danger' | 'warn' | string;
+  /** Solo en alertas `incremento-ipc`. */
+  idContrato: number | null;
+  canonActual: number | null;
+  /** null si el IPC aun no esta configurado. */
+  canonNuevo: number | null;
 }
 
 export interface ResumenResponse {
@@ -56,13 +67,41 @@ export interface VencimientoAnio {
   canonMensual: number;
 }
 
+export interface ProyectoFinanciero {
+  id: number;
+  proyecto: string;
+  inmuebles: number;
+  arrendados: number;
+  ocupacionPorcentaje: number;
+  canonMensual: number;
+  egresosMensuales: number;
+  ebitdaMensual: number;
+  valorComercial: number;
+}
+
 export interface ReportesResponse {
   canonPorProyecto: Distribucion[];
   canonPorTipoInmueble: Distribucion[];
   composicionEgresos: ComposicionEgresos[];
   vencimientosPorAnio: VencimientoAnio[];
+  proyectos: ProyectoFinanciero[];
 }
 
-export function fetchReportes(): Promise<ReportesResponse> {
-  return apiGet<ReportesResponse>('/api/reportes');
+export function fetchReportes(proyecto?: number): Promise<ReportesResponse> {
+  return apiGet<ReportesResponse>('/api/reportes', { proyecto });
+}
+
+export interface Ipc {
+  /** Porcentaje (5.2 = 5,2 %); null si no se ha configurado. */
+  valor: number | null;
+  fechaActualizacion: string | null;
+  actualizadoPor: string | null;
+}
+
+export function fetchIpc(): Promise<Ipc> {
+  return apiGet<Ipc>('/api/parametros/ipc');
+}
+
+export function actualizarIpc(valor: number): Promise<Ipc> {
+  return apiPut<Ipc>('/api/parametros/ipc', { valor });
 }

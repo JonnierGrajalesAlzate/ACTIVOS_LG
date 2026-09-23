@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties, type FormEvent, type MouseEvent } from 'react';
+import { useEffect, useState, type ChangeEvent, type CSSProperties, type FormEvent, type MouseEvent } from 'react';
 import logoUrl from '../../assets/logo.png';
 import AnimatedGradient, { type GradientConfig } from '../ui/animated-gradient';
 
@@ -29,6 +29,11 @@ const KEYFRAMES = `
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-7px); }
 }
+/* Oculta el boton nativo de Edge para no duplicar el de mostrar/ocultar. */
+#login-password::-ms-reveal,
+#login-password::-ms-clear {
+  display: none;
+}
 `;
 
 function useReducedMotion(): boolean {
@@ -58,6 +63,18 @@ export function LoginActivosLG({ onSubmit, onForgotPassword, errorMessage, submi
   const [buttonHover, setButtonHover] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [toggleHover, setToggleHover] = useState(false);
+
+  const hasPassword = password.length > 0;
+
+  const handlePasswordChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setPassword(value);
+    // Al vaciar el campo el boton se desmonta: se vuelve a ocultar la contrasena y se limpia el hover.
+    if (!value) {
+      setShowPassword(false);
+      setToggleHover(false);
+    }
+  };
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -315,7 +332,7 @@ export function LoginActivosLG({ onSubmit, onForgotPassword, errorMessage, submi
               <input
                 id="login-usuario"
                 type="text"
-                placeholder="nombre.apellido"
+                placeholder="Ingresa tu usuario"
                 value={usuario}
                 onChange={(e) => setUsuario(e.target.value)}
                 onFocus={() => setFocusedField('usuario')}
@@ -332,15 +349,18 @@ export function LoginActivosLG({ onSubmit, onForgotPassword, errorMessage, submi
                 <input
                   id="login-password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="********"
+                  placeholder="Ingresa tu contraseña"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={handlePasswordChange}
                   onFocus={() => setFocusedField('password')}
                   onBlur={() => setFocusedField(null)}
-                  style={inputStyle(focusedField === 'password', true)}
+                  style={inputStyle(focusedField === 'password', hasPassword)}
                 />
+                {hasPassword && (
                 <button
                   type="button"
+                  // Evita que el input pierda el foco (y el cursor) al hacer clic en el boton.
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => setShowPassword((v) => !v)}
                   onMouseEnter={() => setToggleHover(true)}
                   onMouseLeave={() => setToggleHover(false)}
@@ -370,6 +390,7 @@ export function LoginActivosLG({ onSubmit, onForgotPassword, errorMessage, submi
                     </svg>
                   )}
                 </button>
+                )}
               </div>
             </div>
 

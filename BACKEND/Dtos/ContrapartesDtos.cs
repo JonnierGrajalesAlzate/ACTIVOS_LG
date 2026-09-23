@@ -41,8 +41,7 @@ public record ArrendatarioListItemDto(
 public record ArrendatariosKpisDto(
     int TotalArrendatarios,
     decimal CanonMensualTotal,
-    int ContratosVencidos,
-    int VencenEn90Dias
+    int VencenEn120Dias
 );
 
 public record ArrendatariosResponseDto(
@@ -70,9 +69,15 @@ public record ContratoListItemDto(
 
 public record ContratosKpisDto(
     int ContratosVigentes,
-    int VencenEn90Dias,
-    int Vencidos,
+    int VencenEn120Dias,
     decimal CanonMensualTotal
+);
+
+public record AplicarIncrementoResultDto(
+    int IdContrato,
+    decimal CanonAnterior,
+    decimal CanonNuevo,
+    DateOnly? ProximoIncremento
 );
 
 public record ContratosResponseDto(

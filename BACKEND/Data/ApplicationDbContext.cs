@@ -28,11 +28,17 @@ public partial class ApplicationDbContext : DbContext
 
     public virtual DbSet<Estado> Estados { get; set; }
 
+    public virtual DbSet<Etapa> Etapas { get; set; }
+
+    public virtual DbSet<HistorialIncrementoCanon> HistorialIncrementosCanon { get; set; }
+
     public virtual DbSet<Inmueble> Inmuebles { get; set; }
 
     public virtual DbSet<Leasing> Leasings { get; set; }
 
     public virtual DbSet<Marca> Marcas { get; set; }
+
+    public virtual DbSet<Parametro> Parametros { get; set; }
 
     public virtual DbSet<Proyecto> Proyectos { get; set; }
 
@@ -301,6 +307,90 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnName("descripcion");
         });
 
+        modelBuilder.Entity<Parametro>(entity =>
+        {
+            entity.HasKey(e => e.Clave).HasName("PK_parametro");
+
+            entity.ToTable("parametro");
+
+            entity.Property(e => e.Clave)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("clave");
+            entity.Property(e => e.Valor)
+                .HasColumnType("decimal(10, 4)")
+                .HasColumnName("valor");
+            entity.Property(e => e.Descripcion)
+                .HasMaxLength(200)
+                .IsUnicode(false)
+                .HasColumnName("descripcion");
+            entity.Property(e => e.FechaActualizacion)
+                .HasColumnName("fecha_actualizacion")
+                .HasDefaultValueSql("sysutcdatetime()");
+            entity.Property(e => e.ActualizadoPor)
+                .HasMaxLength(200)
+                .IsUnicode(false)
+                .HasColumnName("actualizado_por");
+        });
+
+        modelBuilder.Entity<HistorialIncrementoCanon>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK_historial_incremento_canon");
+
+            entity.ToTable("historial_incremento_canon");
+
+            entity.HasIndex(e => e.IdContrato, "IX_HISTORIAL_INCREMENTO_CONTRATO");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.IdContrato).HasColumnName("id_contrato");
+            entity.Property(e => e.FechaIncremento).HasColumnName("fecha_incremento");
+            entity.Property(e => e.CanonAnterior)
+                .HasColumnType("decimal(18, 2)")
+                .HasColumnName("canon_anterior");
+            entity.Property(e => e.CanonNuevo)
+                .HasColumnType("decimal(18, 2)")
+                .HasColumnName("canon_nuevo");
+            entity.Property(e => e.Ipc)
+                .HasColumnType("decimal(10, 4)")
+                .HasColumnName("ipc");
+            entity.Property(e => e.PuntosAdicionales)
+                .HasColumnType("decimal(10, 4)")
+                .HasColumnName("puntos_adicionales");
+            entity.Property(e => e.FechaAplicacion)
+                .HasColumnName("fecha_aplicacion")
+                .HasDefaultValueSql("sysutcdatetime()");
+            entity.Property(e => e.AplicadoPor)
+                .HasMaxLength(200)
+                .IsUnicode(false)
+                .HasColumnName("aplicado_por");
+
+            entity.HasOne(d => d.IdContratoNavigation).WithMany()
+                .HasForeignKey(d => d.IdContrato)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_HISTORIAL_INCREMENTO_CONTRATO");
+        });
+
+        modelBuilder.Entity<Etapa>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK_etapa");
+
+            entity.ToTable("etapa");
+
+            entity.HasIndex(e => new { e.IdProyecto, e.Nombre }, "UQ_etapa_proyecto_nombre").IsUnique();
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.IdProyecto).HasColumnName("id_proyecto");
+            entity.Property(e => e.Nombre)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("nombre");
+
+            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.Etapas)
+                .HasForeignKey(d => d.IdProyecto)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ETAPA_PROYECTO");
+        });
+
         modelBuilder.Entity<Inmueble>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__inmueble__3213E83FC0273E24");
@@ -308,6 +398,8 @@ public partial class ApplicationDbContext : DbContext
             entity.ToTable("inmueble");
 
             entity.HasIndex(e => e.IdProyecto, "IX_INMUEBLE_PROYECTO");
+
+            entity.HasIndex(e => e.IdEtapa, "IX_INMUEBLE_ETAPA");
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.AreaLibrePriv)
@@ -324,6 +416,7 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnName("coeficiente");
             entity.Property(e => e.IdDestinacion).HasColumnName("id_destinacion");
             entity.Property(e => e.IdEstado).HasColumnName("id_estado");
+            entity.Property(e => e.IdEtapa).HasColumnName("id_etapa");
             entity.Property(e => e.IdProyecto).HasColumnName("id_proyecto");
             entity.Property(e => e.IdTipoInmueble).HasColumnName("id_tipo_inmueble");
             entity.Property(e => e.IdTipoLocal).HasColumnName("id_tipo_local");
@@ -334,8 +427,12 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.Mesanine)
                 .HasDefaultValue(false)
                 .HasColumnName("mesanine");
+            entity.Property(e => e.Nivel)
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .HasColumnName("nivel");
             entity.Property(e => e.NumeroLocal)
-                .HasMaxLength(20)
+                .HasMaxLength(100)
                 .IsUnicode(false)
                 .HasColumnName("numero_local");
             entity.Property(e => e.Observaciones)
@@ -372,6 +469,10 @@ public partial class ApplicationDbContext : DbContext
                 .HasForeignKey(d => d.IdEstado)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_INMUEBLE_ESTADO");
+
+            entity.HasOne(d => d.IdEtapaNavigation).WithMany(p => p.Inmuebles)
+                .HasForeignKey(d => d.IdEtapa)
+                .HasConstraintName("FK_INMUEBLE_ETAPA");
 
             entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.Inmuebles)
                 .HasForeignKey(d => d.IdProyecto)

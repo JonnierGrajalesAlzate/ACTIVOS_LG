@@ -6,14 +6,15 @@ namespace ActivosLG.Api.Endpoints;
 
 public static class ResumenEndpoints
 {
-    private const string EstadoArrendado = "Arrendado";
+    private const string EstadoArrendado = Negocio.EstadoArrendado;
 
     public static void MapResumenEndpoints(this WebApplication app)
     {
         app.MapGet("/api/resumen", async (ApplicationDbContext db) =>
         {
             var hoy = DateOnly.FromDateTime(DateTime.UtcNow);
-            var limite90 = hoy.AddDays(90);
+            var limiteVencimiento = hoy.AddDays(Negocio.DiasAlertaVencimiento);
+            var limiteIncremento = hoy.AddDays(Negocio.DiasAvisoIncremento);
 
             var totalInmuebles = await db.Inmuebles.CountAsync();
             var arrendados = await db.Inmuebles.CountAsync(i => i.IdEstadoNavigation.Descripcion == EstadoArrendado);
@@ -24,11 +25,12 @@ public static class ResumenEndpoints
                 .SumAsync(c => (decimal?)c.CanonActualMensual) ?? 0m;
             var egresosMensuales = await db.EgresosMensuales.SumAsync(e => (decimal?)e.TotalEgresos) ?? 0m;
             var ebitdaMensual = await db.EgresosMensuales.SumAsync(e => (decimal?)e.Ebitda) ?? 0m;
+            var valorPortafolio = await db.Inmuebles.SumAsync(i => (decimal?)i.ValorComercial) ?? 0m;
             var ocupacion = totalInmuebles == 0 ? 0m : Math.Round(arrendados * 100m / totalInmuebles, 1);
 
             var kpis = new ResumenKpisDto(
                 canonMensual, egresosMensuales, ebitdaMensual, ocupacion,
-                totalInmuebles, arrendados, disponibles, areaTotal);
+                totalInmuebles, arrendados, disponibles, areaTotal, valorPortafolio);
 
             // Se parte de Proyectos (no de Inmuebles) para que un proyecto recien
             // creado, aun sin inmuebles, aparezca igual en el listado.
@@ -40,7 +42,8 @@ public static class ResumenEndpoints
                     Inmuebles = p.Inmuebles.Count,
                     Arrendados = p.Inmuebles.Count(i => i.IdEstadoNavigation.Descripcion == EstadoArrendado),
                     Canon = p.Inmuebles.Sum(i => (decimal?)i.ContratosArrendamientos
-                        .Sum(c => (decimal?)c.CanonActualMensual)) ?? 0m
+                        .Sum(c => (decimal?)c.CanonActualMensual)) ?? 0m,
+                    Etapas = p.Etapas.Count
                 })
                 .ToListAsync();
 
@@ -48,16 +51,64 @@ public static class ResumenEndpoints
                 .Select(x => new OcupacionProyectoDto(
                     x.Id, x.Proyecto, x.Inmuebles, x.Arrendados,
                     x.Inmuebles == 0 ? 0m : Math.Round(x.Arrendados * 100m / x.Inmuebles, 1),
-                    x.Canon))
+                    x.Canon,
+                    x.Etapas))
                 .OrderByDescending(x => x.CanonMensual)
                 .ToList();
 
-            // Alertas reales: contratos vencidos, proximos a vencer y vacantes con
-            // EBITDA negativo (generan egresos sin ingreso).
+            // Alertas reales: incrementos de canon por IPC, contratos proximos a vencer y
+            // vacantes con EBITDA negativo (generan egresos sin ingreso). Los contratos ya
+            // vencidos no generan alerta: significan renovacion pendiente.
             var alertas = new List<AlertaDto>();
 
+            var ipc = await db.Parametros
+                .Where(p => p.Clave == Negocio.ParametroIpc)
+                .Select(p => p.Valor)
+                .FirstOrDefaultAsync();
+
+            var incrementos = await db.ContratosArrendamientos
+                .Where(c => c.ProximoIncremento != null && c.ProximoIncremento <= limiteIncremento &&
+                            c.TipoIncrementoActual != null && c.TipoIncrementoActual.Contains("IPC"))
+                .OrderBy(c => c.ProximoIncremento)
+                .Select(c => new
+                {
+                    c.Id,
+                    Inmueble = (c.IdInmuebleNavigation.IdTipoLocalNavigation.Descripcion + " " +
+                                c.IdInmuebleNavigation.NumeroLocal).Trim(),
+                    Proyecto = c.IdInmuebleNavigation.IdProyectoNavigation.Nombre,
+                    Arrendatario = c.NitArrendatarioNavigation != null ? c.NitArrendatarioNavigation.Nombre : null,
+                    c.ProximoIncremento,
+                    c.CanonActualMensual,
+                    c.PuntosAdicionalesIpc
+                })
+                .ToListAsync();
+
+            foreach (var c in incrementos)
+            {
+                var dias = c.ProximoIncremento!.Value.DayNumber - hoy.DayNumber;
+                var pendiente = dias < 0;
+                decimal? canonNuevo = ipc is { } v && c.CanonActualMensual is { } canon
+                    ? Negocio.CanonConIncremento(canon, v, c.PuntosAdicionalesIpc)
+                    : null;
+                var detalle = canonNuevo is null
+                    ? $"Canon {c.CanonActualMensual:N0} · configura el IPC para calcular el nuevo"
+                    : $"Canon {c.CanonActualMensual:N0} → {canonNuevo:N0} (IPC {ipc * 100:0.##} %{(c.PuntosAdicionalesIpc is > 0 ? $" + {c.PuntosAdicionalesIpc * 100:0.##} pts" : "")})";
+                alertas.Add(new AlertaDto(
+                    "incremento-ipc",
+                    c.Inmueble,
+                    $"{c.Proyecto} · {c.Arrendatario ?? "sin arrendatario"}",
+                    pendiente
+                        ? $"Incremento IPC pendiente desde {c.ProximoIncremento:dd/MM/yyyy}"
+                        : dias == 0 ? "Incremento IPC hoy" : $"Incremento IPC en {dias} dias",
+                    detalle,
+                    pendiente ? "danger" : "warn",
+                    c.Id,
+                    c.CanonActualMensual,
+                    canonNuevo));
+            }
+
             var contratosCriticos = await db.ContratosArrendamientos
-                .Where(c => c.ProximoVencimiento != null && c.ProximoVencimiento <= limite90)
+                .Where(c => c.ProximoVencimiento != null && c.ProximoVencimiento >= hoy && c.ProximoVencimiento <= limiteVencimiento)
                 .OrderBy(c => c.ProximoVencimiento)
                 .Select(c => new
                 {
@@ -68,20 +119,19 @@ public static class ResumenEndpoints
                     c.ProximoVencimiento,
                     c.CanonActualMensual
                 })
-                .Take(6)
+                .Take(10)
                 .ToListAsync();
 
             foreach (var c in contratosCriticos)
             {
                 var dias = c.ProximoVencimiento!.Value.DayNumber - hoy.DayNumber;
-                var vencido = dias < 0;
                 alertas.Add(new AlertaDto(
-                    vencido ? "contrato-vencido" : "contrato-por-vencer",
+                    "contrato-por-vencer",
                     c.Inmueble,
                     $"{c.Proyecto} · {c.Arrendatario ?? "sin arrendatario"}",
-                    vencido ? $"Vencido hace {Math.Abs(dias)} dias" : $"Vence en {dias} dias",
+                    dias == 0 ? "Vence hoy" : $"Vence en {dias} dias",
                     $"Canon {c.CanonActualMensual:N0}",
-                    vencido ? "danger" : "warn"));
+                    "warn"));
             }
 
             var vacantesCostosas = await db.EgresosMensuales

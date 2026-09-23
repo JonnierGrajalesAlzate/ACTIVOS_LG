@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { fetchArrendadores, type ArrendadorListItem } from '../api/contrapartes';
+import { fetchPropietarios, type PropietarioListItem } from '../api/contrapartes';
 import { SoftCard } from '../components/cards/Cards';
 import { Header } from '../components/layout/Header';
 import { Pagination } from '../components/pagination/Pagination';
@@ -11,7 +11,7 @@ import { useDebouncedValue } from '../utils/useDebouncedValue';
 
 const PAGE_SIZE = 10;
 
-export function ArrendadoresPage() {
+export function PropietariosPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [sortField, setSortField] = useState('giro');
@@ -19,9 +19,9 @@ export function ArrendadoresPage() {
   const debouncedSearch = useDebouncedValue(search, 250);
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['arrendadores', { debouncedSearch, page, sortField, sortDir }],
+    queryKey: ['propietarios', { debouncedSearch, page, sortField, sortDir }],
     queryFn: () =>
-      fetchArrendadores({
+      fetchPropietarios({
         q: debouncedSearch || undefined,
         pagina: page,
         tamano: PAGE_SIZE,
@@ -39,8 +39,8 @@ export function ArrendadoresPage() {
     setPage(1);
   };
 
-  const columns: DataTableColumn<ArrendadorListItem>[] = [
-    { key: 'nombre', header: 'Arrendador', sortable: true, render: (r) => r.nombre },
+  const columns: DataTableColumn<PropietarioListItem>[] = [
+    { key: 'nombre', header: 'Propietario', sortable: true, render: (r) => r.nombre },
     { key: 'nit', header: 'NIT', render: (r) => r.nit },
     { key: 'inmuebles', header: 'Inmuebles', align: 'right', sortable: true, render: (r) => r.inmuebles },
     { key: 'contratos', header: 'Contratos', align: 'right', render: (r) => r.contratos },
@@ -57,10 +57,10 @@ export function ArrendadoresPage() {
 
   return (
     <div>
-      <Header meta={pageMeta.arrendadores} searchValue={search} onSearchChange={setSearch} />
+      <Header meta={pageMeta.propietarios} searchValue={search} onSearchChange={setSearch} />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 22 }}>
-        <SoftCard label="Arrendadores" value={String(kpis?.totalArrendadores ?? 0)} />
+        <SoftCard label="Propietarios" value={String(kpis?.totalArrendadores ?? 0)} />
         <SoftCard
           label="Giro mensual"
           value={formatCurrencyCompact(kpis?.giroMensualTotal ?? 0)}
@@ -71,7 +71,7 @@ export function ArrendadoresPage() {
       </div>
 
       {isError ? (
-        <div style={{ padding: 24, color: 'var(--danger)' }}>No se pudieron cargar los arrendadores.</div>
+        <div style={{ padding: 24, color: 'var(--danger)' }}>No se pudieron cargar los propietarios.</div>
       ) : (
         <>
           <DataTable
@@ -82,7 +82,7 @@ export function ArrendadoresPage() {
             sortField={sortField}
             sortDir={sortDir}
             onSortChange={handleSortChange}
-            emptyTitle="Sin arrendadores"
+            emptyTitle="Sin propietarios"
             emptyHelp="No hay propietarios registrados con este filtro."
           />
           {data && data.pagina.total > 0 && (

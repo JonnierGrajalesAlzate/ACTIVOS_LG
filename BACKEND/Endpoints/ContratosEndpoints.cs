@@ -1,4 +1,5 @@
 using ActivosLG.Api.Data;
+using ActivosLG.Api.Data.Entities;
 using ActivosLG.Api.Dtos;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,7 +22,7 @@ public static class ContratosEndpoints
             int tamano = 10) =>
         {
             var hoy = DateOnly.FromDateTime(DateTime.UtcNow);
-            var limite90 = hoy.AddDays(90);
+            var limiteVencimiento = hoy.AddDays(Negocio.DiasAlertaVencimiento);
 
             var baseQuery =
                 from c in db.ContratosArrendamientos
@@ -46,8 +47,8 @@ public static class ContratosEndpoints
                 "vencido" => baseQuery.Where(x => x.Contrato.ProximoVencimiento != null && x.Contrato.ProximoVencimiento < hoy),
                 "por-vencer" => baseQuery.Where(x => x.Contrato.ProximoVencimiento != null &&
                                                      x.Contrato.ProximoVencimiento >= hoy &&
-                                                     x.Contrato.ProximoVencimiento <= limite90),
-                "vigente" => baseQuery.Where(x => x.Contrato.ProximoVencimiento == null || x.Contrato.ProximoVencimiento > limite90),
+                                                     x.Contrato.ProximoVencimiento <= limiteVencimiento),
+                "vigente" => baseQuery.Where(x => x.Contrato.ProximoVencimiento == null || x.Contrato.ProximoVencimiento > limiteVencimiento),
                 _ => baseQuery
             };
 
@@ -64,9 +65,9 @@ public static class ContratosEndpoints
             var total = await baseQuery.CountAsync();
             var canonTotal = await baseQuery.SumAsync(x => (decimal?)x.Contrato.CanonActualMensual) ?? 0m;
             var vencidos = await baseQuery.CountAsync(x => x.Contrato.ProximoVencimiento != null && x.Contrato.ProximoVencimiento < hoy);
-            var vencen90 = await baseQuery.CountAsync(x => x.Contrato.ProximoVencimiento != null &&
-                                                           x.Contrato.ProximoVencimiento >= hoy &&
-                                                           x.Contrato.ProximoVencimiento <= limite90);
+            var porVencer = await baseQuery.CountAsync(x => x.Contrato.ProximoVencimiento != null &&
+                                                            x.Contrato.ProximoVencimiento >= hoy &&
+                                                            x.Contrato.ProximoVencimiento <= limiteVencimiento);
 
             dir = dir.Equals("desc", StringComparison.OrdinalIgnoreCase) ? "desc" : "asc";
             baseQuery = (orden.ToLowerInvariant(), dir) switch
@@ -119,7 +120,7 @@ public static class ContratosEndpoints
                 {
                     null => "Sin vencimiento",
                     < 0 => "Vencido",
-                    <= 90 => "Por vencer",
+                    <= Negocio.DiasAlertaVencimiento => "Por vencer",
                     _ => "Vigente"
                 };
 
@@ -133,8 +134,53 @@ public static class ContratosEndpoints
 
             return Results.Ok(new ContratosResponseDto(
                 new PagedResult<ContratoListItemDto>(items, pagina, tamano, total),
-                new ContratosKpisDto(vigentes, vencen90, vencidos, canonTotal)));
+                new ContratosKpisDto(vigentes, porVencer, canonTotal)));
         })
         .WithName("GetContratos");
+
+        // Aplica el incremento anual por IPC que la notificacion sugiere: actualiza el canon,
+        // corre la fecha del proximo incremento un anio y deja el registro en el historial.
+        group.MapPost("/{id:int}/aplicar-incremento", async (int id, ApplicationDbContext db, HttpContext http) =>
+        {
+            var contrato = await db.ContratosArrendamientos.FirstOrDefaultAsync(c => c.Id == id);
+            if (contrato is null)
+                return Results.NotFound(new { message = "El contrato no existe." });
+
+            if (!Negocio.EsIncrementoIpc(contrato.TipoIncrementoActual))
+                return Results.BadRequest(new { message = "El contrato no se incrementa por IPC." });
+
+            if (contrato.CanonActualMensual is not { } canonAnterior || contrato.ProximoIncremento is not { } fechaIncremento)
+                return Results.BadRequest(new { message = "El contrato no tiene canon o fecha de incremento registrados." });
+
+            var hoy = DateOnly.FromDateTime(DateTime.UtcNow);
+            if (fechaIncremento > hoy.AddDays(Negocio.DiasAvisoIncremento))
+                return Results.Conflict(new { message = "El incremento de este contrato todavia no esta proximo." });
+
+            var ipc = await db.Parametros
+                .Where(p => p.Clave == Negocio.ParametroIpc)
+                .Select(p => p.Valor)
+                .FirstOrDefaultAsync();
+            if (ipc is null)
+                return Results.Conflict(new { message = "Configura primero el IPC vigente." });
+
+            var canonNuevo = Negocio.CanonConIncremento(canonAnterior, ipc.Value, contrato.PuntosAdicionalesIpc);
+
+            db.HistorialIncrementosCanon.Add(new HistorialIncrementoCanon
+            {
+                IdContrato = contrato.Id,
+                FechaIncremento = fechaIncremento,
+                CanonAnterior = canonAnterior,
+                CanonNuevo = canonNuevo,
+                Ipc = ipc.Value,
+                PuntosAdicionales = contrato.PuntosAdicionalesIpc,
+                AplicadoPor = http.User.FindFirst("email")?.Value
+            });
+            contrato.CanonActualMensual = canonNuevo;
+            contrato.ProximoIncremento = fechaIncremento.AddYears(1);
+            await db.SaveChangesAsync();
+
+            return Results.Ok(new AplicarIncrementoResultDto(contrato.Id, canonAnterior, canonNuevo, contrato.ProximoIncremento));
+        })
+        .WithName("AplicarIncrementoContrato");
     }
 }

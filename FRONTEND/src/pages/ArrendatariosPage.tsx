@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { fetchArrendatarios, type ArrendatarioListItem } from '../api/contrapartes';
+import { DIAS_ALERTA_VENCIMIENTO } from '../api/resumen';
 import { Header } from '../components/layout/Header';
 import { KpiStrip } from '../components/kpi/KpiStrip';
 import { Pagination } from '../components/pagination/Pagination';
@@ -11,7 +12,7 @@ import { useDebouncedValue } from '../utils/useDebouncedValue';
 
 const PAGE_SIZE = 10;
 
-export function ArrendatariosPage() {
+export function ArrendatariosPage({ tabs }: { tabs?: ReactNode }) {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [sortField, setSortField] = useState('canon');
@@ -78,17 +79,13 @@ export function ArrendatariosPage() {
   return (
     <div>
       <Header meta={pageMeta.arrendatarios} searchValue={search} onSearchChange={setSearch} />
+      {tabs}
 
       <KpiStrip
         items={[
           { label: 'Arrendatarios', value: String(kpis?.totalArrendatarios ?? 0) },
           { label: 'Canon mensual', value: formatCurrencyCompact(kpis?.canonMensualTotal ?? 0), tone: 'accent' },
-          {
-            label: 'Contratos vencidos',
-            value: String(kpis?.contratosVencidos ?? 0),
-            tone: (kpis?.contratosVencidos ?? 0) > 0 ? 'danger' : undefined,
-          },
-          { label: 'Vencen 90 d.', value: String(kpis?.vencenEn90Dias ?? 0) },
+          { label: `Vencen ${DIAS_ALERTA_VENCIMIENTO} d.`, value: String(kpis?.vencenEn120Dias ?? 0) },
         ]}
       />
 

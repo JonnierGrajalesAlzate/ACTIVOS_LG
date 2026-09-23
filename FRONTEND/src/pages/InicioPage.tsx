@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Banknote, DoorOpen, PieChart, Receipt } from 'lucide-react';
+import { Banknote, DoorOpen, Landmark, PieChart, Receipt } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchResumen } from '../api/resumen';
@@ -55,7 +55,9 @@ export function InicioPage() {
                   arrendados={p.arrendados}
                   ocupacionPorcentaje={p.ocupacionPorcentaje}
                   canonMensual={formatCurrencyCompact(p.canonMensual)}
-                  onClick={() => navigate(`/inmuebles?proyecto=${p.id}`)}
+                  onClick={() =>
+                    navigate(p.etapas > 0 ? `/inicio/proyectos/${p.id}` : `/inmuebles?proyecto=${p.id}`)
+                  }
                 />
               ))}
             {!isLoading && proyectos.length === 0 && (
@@ -68,6 +70,13 @@ export function InicioPage() {
 
           <SectionTitle>Indicadores del portafolio</SectionTitle>
           <div className={styles.kpiGrid}>
+            <StatCard
+              icon={Landmark}
+              label="Valor del portafolio"
+              tone="accent"
+              value={formatCurrencyCompact(k?.valorPortafolio ?? 0)}
+              help={`Valor comercial de ${k?.totalInmuebles ?? 0} inmuebles`}
+            />
             <StatCard
               icon={Banknote}
               label="Canon mensual"

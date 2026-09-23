@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { fetchContratos, type ContratoListItem } from '../api/contrapartes';
+import { DIAS_ALERTA_VENCIMIENTO } from '../api/resumen';
 import { SectionTitle } from '../components/cards/Cards';
 import { FilterChipRow, type ChipOption } from '../components/filters/FilterChipRow';
 import { Header } from '../components/layout/Header';
@@ -82,7 +83,7 @@ function ContratoCard({ c }: { c: ContratoListItem }) {
   );
 }
 
-export function ContratosPage() {
+export function ContratosPage({ tabs }: { tabs?: ReactNode }) {
   const [search, setSearch] = useState('');
   const [gestion, setGestion] = useState(TODOS);
   const [page, setPage] = useState(1);
@@ -107,16 +108,12 @@ export function ContratosPage() {
   return (
     <div>
       <Header meta={pageMeta.contratos} searchValue={search} onSearchChange={setSearch} />
+      {tabs}
 
       <KpiStrip
         items={[
           { label: 'Contratos vigentes', value: String(kpis?.contratosVigentes ?? 0) },
-          { label: 'Vencen en 90 dias', value: String(kpis?.vencenEn90Dias ?? 0) },
-          {
-            label: 'Vencidos',
-            value: String(kpis?.vencidos ?? 0),
-            tone: (kpis?.vencidos ?? 0) > 0 ? 'danger' : undefined,
-          },
+          { label: `Vencen en ${DIAS_ALERTA_VENCIMIENTO} dias`, value: String(kpis?.vencenEn120Dias ?? 0) },
           { label: 'Canon mensual', value: formatCurrencyCompact(kpis?.canonMensualTotal ?? 0), tone: 'accent' },
         ]}
       />

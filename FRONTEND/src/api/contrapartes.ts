@@ -1,8 +1,10 @@
-import { apiGet } from './client';
+import { apiGet, apiPost } from './client';
 import type { PagedResult } from './inmuebles';
 
-// ---- Arrendadores ----
-export interface ArrendadorListItem {
+// ---- Propietarios ----
+// En la base de datos y en la API se llaman "arrendadores" (tabla `arrendador`, `/api/arrendadores`);
+// en la interfaz se muestran como propietarios. Los nombres de campos JSON siguen los del backend.
+export interface PropietarioListItem {
   nit: string;
   nombre: string;
   inmuebles: number;
@@ -10,25 +12,25 @@ export interface ArrendadorListItem {
   giroMensual: number;
 }
 
-export interface ArrendadoresKpis {
+export interface PropietariosKpis {
   totalArrendadores: number;
   giroMensualTotal: number;
   inmueblesRepresentados: number;
 }
 
-export interface ArrendadoresResponse {
-  pagina: PagedResult<ArrendadorListItem>;
-  kpis: ArrendadoresKpis;
+export interface PropietariosResponse {
+  pagina: PagedResult<PropietarioListItem>;
+  kpis: PropietariosKpis;
 }
 
-export function fetchArrendadores(query: {
+export function fetchPropietarios(query: {
   q?: string;
   orden?: string;
   dir?: 'asc' | 'desc';
   pagina?: number;
   tamano?: number;
-}): Promise<ArrendadoresResponse> {
-  return apiGet<ArrendadoresResponse>('/api/arrendadores', { ...query });
+}): Promise<PropietariosResponse> {
+  return apiGet<PropietariosResponse>('/api/arrendadores', { ...query });
 }
 
 // ---- Arrendatarios ----
@@ -46,8 +48,7 @@ export interface ArrendatarioListItem {
 export interface ArrendatariosKpis {
   totalArrendatarios: number;
   canonMensualTotal: number;
-  contratosVencidos: number;
-  vencenEn90Dias: number;
+  vencenEn120Dias: number;
 }
 
 export interface ArrendatariosResponse {
@@ -73,6 +74,7 @@ export interface ContratoListItem {
   inmueble: string;
   proyecto: string;
   arrendatario: string | null;
+  /** Propietario del inmueble (el backend lo expone como `arrendador`). */
   arrendador: string | null;
   marca: string | null;
   canonMensual: number | null;
@@ -88,9 +90,19 @@ export interface ContratoListItem {
 
 export interface ContratosKpis {
   contratosVigentes: number;
-  vencenEn90Dias: number;
-  vencidos: number;
+  vencenEn120Dias: number;
   canonMensualTotal: number;
+}
+
+export interface AplicarIncrementoResult {
+  idContrato: number;
+  canonAnterior: number;
+  canonNuevo: number;
+  proximoIncremento: string | null;
+}
+
+export function aplicarIncremento(idContrato: number): Promise<AplicarIncrementoResult> {
+  return apiPost<AplicarIncrementoResult>(`/api/contratos/${idContrato}/aplicar-incremento`);
 }
 
 export interface ContratosResponse {

@@ -52,11 +52,11 @@ public static class ArrendatariosEndpoints
 
             var total = await baseQuery.CountAsync();
             var canonTotal = await baseQuery.SumAsync(x => (decimal?)x.Canon) ?? 0m;
-            var vencidos = await baseQuery.CountAsync(x => x.ProximoVencimiento != null && x.ProximoVencimiento < hoy);
-            var vencen90 = await baseQuery.CountAsync(x =>
+            var limiteVencimiento = hoy.AddDays(Negocio.DiasAlertaVencimiento);
+            var porVencer = await baseQuery.CountAsync(x =>
                 x.ProximoVencimiento != null &&
                 x.ProximoVencimiento >= hoy &&
-                x.ProximoVencimiento <= hoy.AddDays(90));
+                x.ProximoVencimiento <= limiteVencimiento);
 
             dir = dir.Equals("asc", StringComparison.OrdinalIgnoreCase) ? "asc" : "desc";
             baseQuery = (orden.ToLowerInvariant(), dir) switch
@@ -89,7 +89,7 @@ public static class ArrendatariosEndpoints
 
             return Results.Ok(new ArrendatariosResponseDto(
                 new PagedResult<ArrendatarioListItemDto>(items, pagina, tamano, total),
-                new ArrendatariosKpisDto(total, canonTotal, vencidos, vencen90)));
+                new ArrendatariosKpisDto(total, canonTotal, porVencer)));
         })
         .WithName("GetArrendatarios");
     }

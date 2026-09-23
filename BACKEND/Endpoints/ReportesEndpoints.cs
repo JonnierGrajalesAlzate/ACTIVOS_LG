@@ -10,9 +10,20 @@ public static class ReportesEndpoints
     {
         // No hay historico mensual en la base (egresos_mensuales no tiene fecha),
         // asi que los informes son agregaciones del estado actual, no series de tiempo.
-        app.MapGet("/api/reportes", async (ApplicationDbContext db) =>
+        // `proyecto` (opcional) restringe todos los informes a un solo proyecto.
+        app.MapGet("/api/reportes", async (ApplicationDbContext db, int? proyecto) =>
         {
-            var canonPorProyectoRaw = await db.ContratosArrendamientos
+            var contratos = db.ContratosArrendamientos.AsQueryable();
+            var egresos = db.EgresosMensuales.AsQueryable();
+            var proyectos = db.Proyectos.AsQueryable();
+            if (proyecto.HasValue)
+            {
+                contratos = contratos.Where(c => c.IdInmuebleNavigation.IdProyecto == proyecto.Value);
+                egresos = egresos.Where(e => e.IdInmuebleNavigation.IdProyecto == proyecto.Value);
+                proyectos = proyectos.Where(p => p.Id == proyecto.Value);
+            }
+
+            var canonPorProyectoRaw = await contratos
                 .GroupBy(c => c.IdInmuebleNavigation.IdProyectoNavigation.Nombre)
                 .Select(g => new
                 {
@@ -26,7 +37,7 @@ public static class ReportesEndpoints
                 .Select(x => new DistribucionDto(x.Etiqueta, x.Valor, x.Conteo))
                 .ToList();
 
-            var canonPorTipoRaw = await db.ContratosArrendamientos
+            var canonPorTipoRaw = await contratos
                 .GroupBy(c => c.IdInmuebleNavigation.IdTipoInmuebleNavigation.Descripcion)
                 .Select(g => new
                 {
@@ -40,7 +51,7 @@ public static class ReportesEndpoints
                 .Select(x => new DistribucionDto(x.Etiqueta, x.Valor, x.Conteo))
                 .ToList();
 
-            var totales = await db.EgresosMensuales
+            var totales = await egresos
                 .Select(e => new
                 {
                     Predial = e.PredialMensual ?? 0m,
@@ -67,7 +78,7 @@ public static class ReportesEndpoints
             .OrderByDescending(c => c.Valor)
             .ToList();
 
-            var vencimientosRaw = await db.ContratosArrendamientos
+            var vencimientosRaw = await contratos
                 .Where(c => c.ProximoVencimiento != null)
                 .GroupBy(c => c.ProximoVencimiento!.Value.Year)
                 .Select(g => new
@@ -82,8 +93,32 @@ public static class ReportesEndpoints
                 .Select(x => new VencimientoAnioDto(x.Anio, x.Contratos, x.Canon))
                 .ToList();
 
+            // Mismas reglas que /api/resumen: canon = suma de contratos; EBITDA y egresos de egresos_mensuales.
+            var porProyectoRaw = await proyectos
+                .Select(p => new
+                {
+                    p.Id,
+                    p.Nombre,
+                    Inmuebles = p.Inmuebles.Count,
+                    Arrendados = p.Inmuebles.Count(i => i.IdEstadoNavigation.Descripcion == Negocio.EstadoArrendado),
+                    Canon = p.Inmuebles.Sum(i => (decimal?)i.ContratosArrendamientos.Sum(c => (decimal?)c.CanonActualMensual)) ?? 0m,
+                    Egresos = p.Inmuebles.Sum(i => (decimal?)i.EgresosMensuales.Sum(e => (decimal?)e.TotalEgresos)) ?? 0m,
+                    Ebitda = p.Inmuebles.Sum(i => (decimal?)i.EgresosMensuales.Sum(e => (decimal?)e.Ebitda)) ?? 0m,
+                    Valor = p.Inmuebles.Sum(i => (decimal?)i.ValorComercial) ?? 0m
+                })
+                .ToListAsync();
+            var porProyecto = porProyectoRaw
+                .Where(x => x.Inmuebles > 0)
+                .OrderByDescending(x => x.Canon)
+                .ThenBy(x => x.Nombre)
+                .Select(x => new ProyectoFinancieroDto(
+                    x.Id, x.Nombre, x.Inmuebles, x.Arrendados,
+                    x.Inmuebles == 0 ? 0m : Math.Round(x.Arrendados * 100m / x.Inmuebles, 1),
+                    x.Canon, x.Egresos, x.Ebitda, x.Valor))
+                .ToList();
+
             return Results.Ok(new ReportesResponseDto(
-                canonPorProyecto, canonPorTipo, composicion, vencimientos));
+                canonPorProyecto, canonPorTipo, composicion, vencimientos, porProyecto));
         })
         .WithName("GetReportes")
         .WithTags("Reportes");

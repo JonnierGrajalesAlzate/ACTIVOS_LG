@@ -7,8 +7,15 @@
     var(--bg);
 }
 
+.content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .main {
   flex: 1;
   min-width: 0;
-  padding: 28px 34px 44px;
+  padding: 24px 34px 44px;
 }
