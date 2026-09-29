@@ -19,6 +19,8 @@ var jwtSecret = builder.Configuration["JWT_SECRET"]
     ?? throw new InvalidOperationException("JWT_SECRET no esta configurada. Revisa el archivo .env");
 
 builder.Services.AddOpenApi();
+// Los listados y catalogos son JSON repetitivo: comprimidos pesan una fraccion y cargan antes.
+builder.Services.AddResponseCompression(options => options.EnableForHttps = true);
 builder.Services.AddSingleton<IDbConnectionFactory, SqlConnectionFactory>();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -70,6 +72,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.UseResponseCompression();
 app.UseCors(FrontendCorsPolicy);
 
 app.UseAuthentication();
@@ -85,5 +88,6 @@ app.MapContratosEndpoints();
 app.MapResumenEndpoints();
 app.MapReportesEndpoints();
 app.MapParametrosEndpoints();
+app.MapCatalogosEndpoints();
 
 app.Run();

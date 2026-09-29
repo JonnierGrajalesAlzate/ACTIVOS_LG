@@ -55,6 +55,20 @@
   margin-top: 3px;
 }
 
+.arrendatarioLink {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--accent);
+  text-align: left;
+  cursor: pointer;
+}
+
+.arrendatarioLink:hover {
+  text-decoration: underline;
+}
+
 .progress {
   flex: 1;
   min-width: 140px;

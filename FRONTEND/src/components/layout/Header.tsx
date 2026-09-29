@@ -28,9 +28,12 @@ export function Header({ meta, searchValue, onSearchChange, searchPlaceholder, o
             />
           </div>
         )}
-        <button type="button" className={styles.action} onClick={onAction}>
-          {meta.actionLabel}
-        </button>
+        {/* Sin accion (p. ej. el rol no permite registrar) no se muestra el boton. */}
+        {onAction && (
+          <button type="button" className={styles.action} onClick={onAction}>
+            {meta.actionLabel}
+          </button>
+        )}
       </div>
     </div>
   );

@@ -2,13 +2,19 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Banknote, DoorOpen, Landmark, PieChart, Receipt } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchResumen } from '../api/resumen';
+import { CATALOGOS_KEY, type Catalogos } from '../api/catalogos';
+import { deleteProyecto, type Proyecto } from '../api/inmuebles';
+import { fetchResumen, type OcupacionProyecto } from '../api/resumen';
+import { usePermisos } from '../auth/permisos';
 import { ProjectCard, SectionTitle } from '../components/cards/Cards';
+import { ConfirmarEliminar } from '../components/crud/ConfirmarEliminar';
+import { RowActions } from '../components/crud/RowActions';
+import { useCrud } from '../components/crud/useCrud';
 import { OccupancyRing } from '../components/charts/OccupancyRing';
 import { Header } from '../components/layout/Header';
 import { StatCard } from '../components/kpi/StatCard';
 import { ProgressBar } from '../components/progress/ProgressBar';
-import { NuevoProyectoModal } from '../components/proyectos/NuevoProyectoModal';
+import { ProyectoModal } from '../components/proyectos/ProyectoModal';
 import { pageMeta } from '../nav/navConfig';
 import styles from './InicioPage.module.css';
 import { formatArea, formatCurrencyCompact } from '../utils/format';
@@ -19,8 +25,10 @@ export function InicioPage() {
   const { data, isLoading, isError } = useQuery({ queryKey: ['resumen'], queryFn: fetchResumen });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [showNuevoProyecto, setShowNuevoProyecto] = useState(false);
+  const crud = useCrud<OcupacionProyecto>();
+  const { modal } = crud;
   const [search, setSearch] = useState('');
+  const { esAdmin } = usePermisos();
   const k = data?.kpis;
   const ocupacion = k?.ocupacionPorcentaje ?? 0;
   const ocupacionTone = occupancyColor(ocupacion);
@@ -35,7 +43,7 @@ export function InicioPage() {
         searchValue={search}
         onSearchChange={setSearch}
         searchPlaceholder="Buscar proyecto..."
-        onAction={() => setShowNuevoProyecto(true)}
+        onAction={esAdmin ? crud.crear : undefined}
       />
 
       {isError ? (
@@ -57,6 +65,9 @@ export function InicioPage() {
                   canonMensual={formatCurrencyCompact(p.canonMensual)}
                   onClick={() =>
                     navigate(p.etapas > 0 ? `/inicio/proyectos/${p.id}` : `/inmuebles?proyecto=${p.id}`)
+                  }
+                  actions={
+                    <RowActions soloAdmin label={p.proyecto} onEdit={() => crud.editar(p)} onDelete={() => crud.eliminar(p)} />
                   }
                 />
               ))}
@@ -131,13 +142,35 @@ export function InicioPage() {
         </>
       )}
 
-      {showNuevoProyecto && (
-        <NuevoProyectoModal
-          onClose={() => setShowNuevoProyecto(false)}
-          onCreated={() => {
-            queryClient.invalidateQueries({ queryKey: ['resumen'] });
-            queryClient.invalidateQueries({ queryKey: ['proyectos'] });
+      {modal?.tipo === 'crear' && (
+        <ProyectoModal
+          onClose={crud.cerrar}
+          // Un proyecto nuevo esta vacio: se pasa directo a registrar su primer inmueble.
+          onCreated={(proyecto) => {
+            // Se agrega ya a las listas en cache para que el selector lo muestre sin esperar la recarga.
+            queryClient.setQueryData<Catalogos>(CATALOGOS_KEY, (cat) =>
+              cat ? { ...cat, proyectos: [...cat.proyectos, proyecto] } : cat,
+            );
+            queryClient.setQueryData<Proyecto[]>(['proyectos'], (lista) => (lista ? [...lista, proyecto] : lista));
+            navigate(`/inmuebles?proyecto=${proyecto.id}&registrar=1`);
           }}
+        />
+      )}
+      {modal?.tipo === 'editar' && (
+        <ProyectoModal existente={{ id: modal.fila.id, nombre: modal.fila.proyecto }} onClose={crud.cerrar} />
+      )}
+      {modal?.tipo === 'eliminar' && (
+        <ConfirmarEliminar
+          objeto={`el proyecto ${modal.fila.proyecto}`}
+          detalle={
+            modal.fila.inmuebles > 0
+              ? `Tiene ${modal.fila.inmuebles} inmueble(s): eliminalos o muevelos a otro proyecto primero.`
+              : modal.fila.etapas > 0
+                ? `Sus ${modal.fila.etapas} etapa(s) tambien se eliminan.`
+                : undefined
+          }
+          eliminar={() => deleteProyecto(modal.fila.id)}
+          onClose={crud.cerrar}
         />
       )}
     </div>

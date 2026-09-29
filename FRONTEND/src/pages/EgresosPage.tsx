@@ -1,6 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { fetchEgresos, type EgresoListItem } from '../api/egresos';
+import { useSearchParams } from 'react-router-dom';
+import { deleteEgreso, fetchEgresos, type EgresoListItem } from '../api/egresos';
+import { usePermisos } from '../auth/permisos';
+import { FiltrosBar, ProyectoFiltro } from '../components/filters/SelectFiltro';
+import { ConfirmarEliminar } from '../components/crud/ConfirmarEliminar';
+import { RowActions } from '../components/crud/RowActions';
+import { useCrud } from '../components/crud/useCrud';
+import { EgresoModal } from '../components/egresos/EgresoModal';
 import { Header } from '../components/layout/Header';
 import { KpiStrip } from '../components/kpi/KpiStrip';
 import { Pagination } from '../components/pagination/Pagination';
@@ -12,16 +19,28 @@ import { useDebouncedValue } from '../utils/useDebouncedValue';
 const PAGE_SIZE = 10;
 
 export function EgresosPage() {
+  // El proyecto vive en la URL para poder recargar o compartir la vista filtrada.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const proyecto = searchParams.get('proyecto') ?? '';
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [sortField, setSortField] = useState('total');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const crud = useCrud<EgresoListItem>();
+  const { modal } = crud;
+  const { puedeEditar } = usePermisos();
   const debouncedSearch = useDebouncedValue(search, 250);
 
+  const setProyecto = (value: string) => {
+    setSearchParams(value ? { proyecto: value } : {});
+    setPage(1);
+  };
+
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['egresos', { debouncedSearch, page, sortField, sortDir }],
+    queryKey: ['egresos', { proyecto, debouncedSearch, page, sortField, sortDir }],
     queryFn: () =>
       fetchEgresos({
+        proyecto: proyecto ? Number(proyecto) : undefined,
         q: debouncedSearch || undefined,
         pagina: page,
         tamano: PAGE_SIZE,
@@ -68,13 +87,42 @@ export function EgresosPage() {
         </span>
       ),
     },
+    {
+      key: 'acciones',
+      header: '',
+      align: 'right',
+      render: (r) => (
+        <RowActions label={`egreso de ${r.inmueble}`} onEdit={() => crud.editar(r)} onDelete={() => crud.eliminar(r)} />
+      ),
+    },
   ];
 
   const kpis = data?.kpis;
 
   return (
     <div>
-      <Header meta={pageMeta.egresos} searchValue={search} onSearchChange={setSearch} />
+      <Header
+        meta={pageMeta.egresos}
+        searchValue={search}
+        onSearchChange={(v) => {
+          setSearch(v);
+          setPage(1);
+        }}
+        onAction={puedeEditar ? crud.crear : undefined}
+      />
+      {modal?.tipo === 'crear' && <EgresoModal onClose={crud.cerrar} />}
+      {modal?.tipo === 'editar' && <EgresoModal id={modal.fila.id} onClose={crud.cerrar} />}
+      {modal?.tipo === 'eliminar' && (
+        <ConfirmarEliminar
+          objeto={`el perfil de egresos de ${modal.fila.inmueble} (${modal.fila.proyecto})`}
+          eliminar={() => deleteEgreso(modal.fila.id)}
+          onClose={crud.cerrar}
+        />
+      )}
+
+      <FiltrosBar>
+        <ProyectoFiltro value={proyecto} onChange={setProyecto} />
+      </FiltrosBar>
 
       <KpiStrip
         items={[

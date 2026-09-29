@@ -15,7 +15,20 @@
 }
 
 .main {
+  position: relative;
   flex: 1;
   min-width: 0;
   padding: 24px 34px 44px;
+}
+
+@media print {
+  .shell {
+    display: block;
+    min-height: 0;
+    background: #fff;
+  }
+
+  .main {
+    padding: 0;
+  }
 }

@@ -1,7 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { fetchPropietarios, type PropietarioListItem } from '../api/contrapartes';
+import { deleteContraparte, fetchPropietarios, type PropietarioListItem } from '../api/contrapartes';
+import { usePermisos } from '../auth/permisos';
 import { SoftCard } from '../components/cards/Cards';
+import { PropietarioModal } from '../components/contrapartes/PropietarioModal';
+import { ConfirmarEliminar } from '../components/crud/ConfirmarEliminar';
+import { RowActions } from '../components/crud/RowActions';
+import { useCrud } from '../components/crud/useCrud';
 import { Header } from '../components/layout/Header';
 import { Pagination } from '../components/pagination/Pagination';
 import { DataTable, type DataTableColumn } from '../components/table/DataTable';
@@ -16,6 +21,9 @@ export function PropietariosPage() {
   const [page, setPage] = useState(1);
   const [sortField, setSortField] = useState('giro');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const crud = useCrud<PropietarioListItem>();
+  const { modal } = crud;
+  const { puedeEditar } = usePermisos();
   const debouncedSearch = useDebouncedValue(search, 250);
 
   const { data, isLoading, isError } = useQuery({
@@ -51,13 +59,40 @@ export function PropietariosPage() {
       sortable: true,
       render: (r) => <b>{formatCurrency(r.giroMensual)}</b>,
     },
+    {
+      key: 'acciones',
+      header: '',
+      align: 'right',
+      render: (r) => <RowActions label={r.nombre} onEdit={() => crud.editar(r)} onDelete={() => crud.eliminar(r)} />,
+    },
   ];
 
   const kpis = data?.kpis;
 
   return (
     <div>
-      <Header meta={pageMeta.propietarios} searchValue={search} onSearchChange={setSearch} />
+      <Header
+        meta={pageMeta.propietarios}
+        searchValue={search}
+        onSearchChange={setSearch}
+        onAction={puedeEditar ? crud.crear : undefined}
+      />
+      {modal?.tipo === 'crear' && <PropietarioModal onClose={crud.cerrar} />}
+      {modal?.tipo === 'editar' && <PropietarioModal existente={modal.fila} onClose={crud.cerrar} />}
+      {modal?.tipo === 'eliminar' && (
+        <ConfirmarEliminar
+          objeto={`el propietario ${modal.fila.nombre}`}
+          detalle={
+            modal.fila.contratos > 0
+              ? `Figura en ${modal.fila.contratos} contrato(s): quitalo de ellos antes de eliminarlo.`
+              : modal.fila.inmuebles > 0
+                ? `Es dueño de ${modal.fila.inmuebles} inmueble(s): quitaselos en su formulario antes de eliminarlo.`
+                : undefined
+          }
+          eliminar={() => deleteContraparte('propietario', modal.fila.nit)}
+          onClose={crud.cerrar}
+        />
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 22 }}>
         <SoftCard label="Propietarios" value={String(kpis?.totalArrendadores ?? 0)} />

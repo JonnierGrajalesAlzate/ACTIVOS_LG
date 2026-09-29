@@ -19,6 +19,9 @@ public partial class Inmueble
 
     public int IdTipoInmueble { get; set; }
 
+    /// <summary>NIT del propietario (tabla arrendador). Script 008_inmueble_propietario.sql.</summary>
+    public string? NitPropietario { get; set; }
+
     public string? MatriculaInmobiliaria { get; set; }
 
     public string? NumeroLocal { get; set; }
@@ -69,6 +72,8 @@ public partial class Inmueble
     public virtual Etapa? IdEtapaNavigation { get; set; }
 
     public virtual Proyecto IdProyectoNavigation { get; set; } = null!;
+
+    public virtual Arrendador? NitPropietarioNavigation { get; set; }
 
     public virtual TipoInmueble IdTipoInmuebleNavigation { get; set; } = null!;
 

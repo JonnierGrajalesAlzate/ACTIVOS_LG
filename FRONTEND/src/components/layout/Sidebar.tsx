@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import logoUrl from '../../assets/logo.png';
 import { useAuth } from '../../auth/AuthContext';
+import { nombreRol } from '../../auth/permisos';
 import { navGroups, navItems } from '../../nav/navConfig';
 import styles from './Sidebar.module.css';
 
@@ -40,7 +41,7 @@ export function Sidebar() {
   };
 
   return (
-    <aside className={`${styles.sidebar} ${expanded ? styles.expanded : styles.collapsed}`}>
+    <aside className={`${styles.sidebar} ${expanded ? styles.expanded : styles.collapsed}`} data-no-print>
       <div className={styles.brandRow}>
         <img src={logoUrl} alt="Activos LG" className={styles.brandLogo} />
         {expanded && (
@@ -101,7 +102,7 @@ export function Sidebar() {
             <>
               <div className={styles.userInfo}>
                 <b className={styles.userName}>{usuario?.nombre ?? ''}</b>
-                <em className={styles.userRole}>{usuario?.rol ?? ''}</em>
+                <em className={styles.userRole}>{nombreRol(usuario?.rol)}</em>
               </div>
               <button type="button" className={styles.iconButton} onClick={logout} aria-label="Cerrar sesion" title="Cerrar sesion">
                 <LogOut size={15} />

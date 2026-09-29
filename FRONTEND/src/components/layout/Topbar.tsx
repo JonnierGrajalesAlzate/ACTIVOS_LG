@@ -39,7 +39,7 @@ export function Topbar() {
   }, [open]);
 
   return (
-    <header className={styles.topbar}>
+    <header className={styles.topbar} data-no-print>
       <div className={styles.actions} ref={wrapRef}>
         <button
           type="button"

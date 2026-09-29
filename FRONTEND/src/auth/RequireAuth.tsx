@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
+import { PantallaCarga } from '../components/loading/PantallaCarga';
 import { useAuth } from './AuthContext';
 
 export function RequireAuth({ children }: { children: ReactNode }) {
@@ -7,7 +8,7 @@ export function RequireAuth({ children }: { children: ReactNode }) {
   const location = useLocation();
 
   if (isLoading) {
-    return null;
+    return <PantallaCarga pantallaCompleta />;
   }
 
   if (!usuario) {

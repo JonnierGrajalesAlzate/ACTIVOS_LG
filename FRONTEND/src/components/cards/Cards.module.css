@@ -131,6 +131,33 @@
   gap: 10px;
 }
 
+.projectCardWrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.projectCardWrap > .projectCard {
+  flex: 1;
+}
+
+.projectCardTopWithActions {
+  padding-right: 64px;
+}
+
+.projectCardActions {
+  position: absolute;
+  top: 14px;
+  right: 12px;
+  opacity: 0.55;
+  transition: opacity 0.15s;
+}
+
+.projectCardWrap:hover .projectCardActions,
+.projectCardActions:focus-within {
+  opacity: 1;
+}
+
 .projectCardIcon {
   width: 32px;
   height: 32px;

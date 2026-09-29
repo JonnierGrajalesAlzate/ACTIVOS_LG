@@ -1,4 +1,5 @@
 using ActivosLG.Api.Data;
+using ActivosLG.Api.Data.Entities;
 using ActivosLG.Api.Dtos;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,7 +9,7 @@ public static class ArrendatariosEndpoints
 {
     public static void MapArrendatariosEndpoints(this WebApplication app)
     {
-        var group = app.MapGroup("/api/arrendatarios").WithTags("Arrendatarios");
+        var group = app.MapGroup("/api/arrendatarios").WithTags("Arrendatarios").CambiosSoloGestores();
 
         group.MapGet("/", async (
             ApplicationDbContext db,
@@ -92,5 +93,59 @@ public static class ArrendatariosEndpoints
                 new ArrendatariosKpisDto(total, canonTotal, porVencer)));
         })
         .WithName("GetArrendatarios");
+
+        group.MapPost("/", async (CrearContraparteDto request, ApplicationDbContext db) =>
+        {
+            var nit = Validacion.Texto(request.Nit);
+            var nombre = Validacion.Texto(request.Nombre);
+            if (nit is null || nombre is null)
+                return Validacion.Error("El NIT y el nombre son obligatorios.");
+            if (Validacion.ExcedeLargo(("El NIT", nit, 20), ("El nombre", nombre, 200)) is { } largo)
+                return Validacion.Error(largo);
+
+            if (await db.Arrendatarios.AnyAsync(a => a.Nit == nit))
+                return Results.Conflict(new { message = "Ya existe un arrendatario con ese NIT." });
+
+            db.Arrendatarios.Add(new Arrendatario { Nit = nit, Nombre = nombre });
+            await db.SaveChangesAsync();
+
+            return Results.Ok(new ContraparteDto(nit, nombre));
+        })
+        .WithName("CrearArrendatario");
+
+        // El NIT es la llave primaria y lo referencian los contratos: solo se edita el nombre.
+        group.MapPut("/{nit}", async (string nit, CrearContraparteDto request, ApplicationDbContext db) =>
+        {
+            var arrendatario = await db.Arrendatarios.FirstOrDefaultAsync(a => a.Nit == nit);
+            if (arrendatario is null)
+                return Results.NotFound(new { message = "El arrendatario no existe." });
+
+            var nombre = Validacion.Texto(request.Nombre);
+            if (nombre is null)
+                return Validacion.Error("El nombre es obligatorio.");
+            if (Validacion.ExcedeLargo(("El nombre", nombre, 200)) is { } largo)
+                return Validacion.Error(largo);
+
+            arrendatario.Nombre = nombre;
+            await db.SaveChangesAsync();
+            return Results.Ok(new ContraparteDto(arrendatario.Nit, arrendatario.Nombre));
+        })
+        .WithName("ActualizarArrendatario");
+
+        group.MapDelete("/{nit}", async (string nit, ApplicationDbContext db) =>
+        {
+            var arrendatario = await db.Arrendatarios.FirstOrDefaultAsync(a => a.Nit == nit);
+            if (arrendatario is null)
+                return Results.NotFound(new { message = "El arrendatario no existe." });
+
+            var contratos = await db.ContratosArrendamientos.CountAsync(c => c.NitArrendatario == nit);
+            if (contratos > 0)
+                return Results.Conflict(new { message = $"No se puede eliminar: el arrendatario figura en {contratos} contrato(s)." });
+
+            db.Arrendatarios.Remove(arrendatario);
+            await db.SaveChangesAsync();
+            return Results.NoContent();
+        })
+        .WithName("EliminarArrendatario");
     }
 }

@@ -29,3 +29,18 @@ a:hover {
 button {
   font-family: inherit;
 }
+
+/* Impresion (informe formal de Reportes): solo el contenido, sin menu ni barras. */
+@media print {
+  [data-no-print] {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  section {
+    break-inside: avoid;
+  }
+}

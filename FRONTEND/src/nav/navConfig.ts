@@ -16,7 +16,6 @@ export type TabId =
   | 'alertas'
   | 'egresos'
   | 'propietarios'
-  | 'arrendatarios'
   | 'contratos'
   | 'reportes'
   | 'carga'
@@ -55,9 +54,8 @@ export const pageMeta: Record<TabId, PageMeta> = {
   alertas: { title: 'Alertas', subtitle: 'Incrementos IPC, contratos por vencer y vacantes en perdida', actionLabel: 'Actualizar' },
   egresos: { title: 'Egresos', subtitle: 'Costo mensual por inmueble', actionLabel: '+ Registrar egreso' },
   propietarios: { title: 'Propietarios', subtitle: 'Dueños de los inmuebles', actionLabel: '+ Nuevo propietario' },
-  arrendatarios: { title: 'Arrendatarios', subtitle: 'Contrapartes de arrendamiento', actionLabel: '+ Nuevo arrendatario' },
-  contratos: { title: 'Contratos', subtitle: 'Vigencia, vencimientos y arrendatarios', actionLabel: '+ Nuevo contrato' },
-  reportes: { title: 'Reportes', subtitle: 'Distribucion del portafolio y ocupacion', actionLabel: '+ Informe a medida' },
+  contratos: { title: 'Contratos', subtitle: 'Arrendatarios, vigencia y vencimientos', actionLabel: '+ Nuevo contrato' },
+  reportes: { title: 'Reportes', subtitle: 'Distribucion del portafolio y ocupacion', actionLabel: 'Generar informe formal' },
   carga: { title: 'Cargar Excel', subtitle: 'Importa inventario, contratos o egresos', actionLabel: 'Ver plantillas' },
   config: { title: 'Configuracion', subtitle: 'Organizacion, alertas y usuarios', actionLabel: 'Guardar cambios' },
 };

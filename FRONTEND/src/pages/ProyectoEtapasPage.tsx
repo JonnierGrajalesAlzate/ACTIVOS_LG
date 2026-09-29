@@ -1,8 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, CircleDashed, Layers } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { fetchEtapas, SIN_ETAPA } from '../api/inmuebles';
+import { deleteEtapa, fetchEtapas, SIN_ETAPA, type EtapaResumen } from '../api/inmuebles';
+import { usePermisos } from '../auth/permisos';
 import { ProjectCard, SectionTitle } from '../components/cards/Cards';
+import { ConfirmarEliminar } from '../components/crud/ConfirmarEliminar';
+import { RowActions } from '../components/crud/RowActions';
+import { useCrud } from '../components/crud/useCrud';
+import { FiltroBoton } from '../components/filters/SelectFiltro';
+import { EtapaModal } from '../components/proyectos/EtapaModal';
 import { Header } from '../components/layout/Header';
 import { formatCurrencyCompact } from '../utils/format';
 import styles from './InicioPage.module.css';
@@ -18,6 +24,9 @@ export function ProyectoEtapasPage() {
     queryFn: () => fetchEtapas(proyectoId),
     enabled: Number.isFinite(proyectoId),
   });
+  const { esAdmin } = usePermisos();
+  const crud = useCrud<EtapaResumen>();
+  const { modal } = crud;
 
   const verInmuebles = (etapaId?: number) =>
     navigate(`/inmuebles?proyecto=${proyectoId}${etapaId !== undefined ? `&etapa=${etapaId}` : ''}`);
@@ -68,7 +77,32 @@ export function ProyectoEtapasPage() {
         <div style={{ padding: 24, color: 'var(--danger)' }}>No se pudieron cargar las etapas del proyecto.</div>
       ) : (
         <>
-          <SectionTitle>Etapas</SectionTitle>
+          {modal?.tipo === 'crear' && <EtapaModal proyectoId={proyectoId} proyectoNombre={data?.nombre} onClose={crud.cerrar} />}
+          {modal?.tipo === 'editar' && (
+            <EtapaModal
+              proyectoId={proyectoId}
+              proyectoNombre={data?.nombre}
+              existente={{ id: modal.fila.id, nombre: modal.fila.nombre }}
+              onClose={crud.cerrar}
+            />
+          )}
+          {modal?.tipo === 'eliminar' && (
+            <ConfirmarEliminar
+              objeto={`la etapa ${modal.fila.nombre}`}
+              detalle={
+                modal.fila.inmuebles > 0
+                  ? `Tiene ${modal.fila.inmuebles} inmueble(s): asignalos a otra etapa primero.`
+                  : undefined
+              }
+              eliminar={() => deleteEtapa(modal.fila.id)}
+              onClose={crud.cerrar}
+            />
+          )}
+
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 16 }}>
+            <SectionTitle>Etapas</SectionTitle>
+            {esAdmin && <FiltroBoton onClick={crud.crear}>+ Agregar etapa</FiltroBoton>}
+          </div>
           <div className={styles.projectsGrid}>
             {isLoading &&
               Array.from({ length: 3 }).map((_, i) => <div key={`esk-${i}`} className={styles.projectSkeleton} />)}
@@ -84,6 +118,11 @@ export function ProyectoEtapasPage() {
                   ocupacionPorcentaje={e.ocupacionPorcentaje}
                   canonMensual={formatCurrencyCompact(e.canonMensual)}
                   onClick={() => verInmuebles(e.id)}
+                  actions={
+                    e.id === SIN_ETAPA ? undefined : (
+                      <RowActions soloAdmin label={e.nombre} onEdit={() => crud.editar(e)} onDelete={() => crud.eliminar(e)} />
+                    )
+                  }
                 />
               ))}
 

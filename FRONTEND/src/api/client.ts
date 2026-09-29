@@ -22,7 +22,15 @@ async function handleResponse<T>(res: Response, path: string, onUnauthorized: 'e
     const body = await res.json().catch(() => null) as { message?: string } | null;
     throw new Error(body?.message ?? `${res.status} ${res.statusText} al consultar ${path}`);
   }
+  // DELETE responde 204 sin cuerpo.
+  if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
+}
+
+export async function apiDelete(path: string): Promise<void> {
+  const url = new URL(path, API_BASE_URL);
+  const res = await fetch(url, { method: 'DELETE', headers: authHeaders() });
+  return handleResponse<void>(res, path, 'expire');
 }
 
 export async function apiGet<T>(path: string, params?: Record<string, string | number | undefined>): Promise<T> {

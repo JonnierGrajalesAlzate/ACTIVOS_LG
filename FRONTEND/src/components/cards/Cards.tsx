@@ -54,6 +54,8 @@ interface ProjectCardProps {
   canonMensual: string;
   icon?: LucideIcon;
   onClick?: () => void;
+  /** Botones (editar/eliminar) en la esquina; van fuera del boton principal para no anidarlos. */
+  actions?: ReactNode;
 }
 
 export function ProjectCard({
@@ -64,11 +66,12 @@ export function ProjectCard({
   canonMensual,
   icon: Icon = Building2,
   onClick,
+  actions,
 }: ProjectCardProps) {
   const tone = occupancyColor(ocupacionPorcentaje);
-  return (
+  const card = (
     <button type="button" className={styles.projectCard} onClick={onClick}>
-      <div className={styles.projectCardTop}>
+      <div className={`${styles.projectCardTop} ${actions ? styles.projectCardTopWithActions : ''}`}>
         <span className={styles.projectCardIcon}>
           <Icon size={18} strokeWidth={2} />
         </span>
@@ -85,6 +88,14 @@ export function ProjectCard({
         </span>
       </div>
     </button>
+  );
+
+  if (!actions) return card;
+  return (
+    <div className={styles.projectCardWrap}>
+      {card}
+      <div className={styles.projectCardActions}>{actions}</div>
+    </div>
   );
 }
 

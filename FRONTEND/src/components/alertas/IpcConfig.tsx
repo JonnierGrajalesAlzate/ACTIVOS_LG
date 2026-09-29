@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { actualizarIpc, fetchIpc } from '../../api/resumen';
+import { usePermisos } from '../../auth/permisos';
 import styles from './IpcConfig.module.css';
 
 const fechaFormatter = new Intl.DateTimeFormat('es-CO', { dateStyle: 'medium', timeStyle: 'short' });
@@ -13,6 +14,7 @@ function parseUtc(value: string): Date {
 /** IPC anual vigente con el que se calcula el canon sugerido en las notificaciones de incremento. */
 export function IpcConfig() {
   const queryClient = useQueryClient();
+  const { esAdmin } = usePermisos();
   const { data } = useQuery({ queryKey: ['ipc'], queryFn: fetchIpc });
   const [editando, setEditando] = useState(false);
   const [valor, setValor] = useState('');
@@ -78,9 +80,11 @@ export function IpcConfig() {
           {mutation.isError && <div className={styles.error}>{mutation.error.message}</div>}
         </form>
       ) : (
-        <button type="button" className={styles.primary} onClick={abrir}>
-          {configurado ? 'Cambiar IPC' : 'Configurar IPC'}
-        </button>
+        esAdmin && (
+          <button type="button" className={styles.primary} onClick={abrir}>
+            {configurado ? 'Cambiar IPC' : 'Configurar IPC'}
+          </button>
+        )
       )}
     </div>
   );

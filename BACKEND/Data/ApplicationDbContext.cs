@@ -420,6 +420,10 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.IdProyecto).HasColumnName("id_proyecto");
             entity.Property(e => e.IdTipoInmueble).HasColumnName("id_tipo_inmueble");
             entity.Property(e => e.IdTipoLocal).HasColumnName("id_tipo_local");
+            entity.Property(e => e.NitPropietario)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasColumnName("nit_propietario");
             entity.Property(e => e.MatriculaInmobiliaria)
                 .HasMaxLength(50)
                 .IsUnicode(false)
@@ -488,6 +492,12 @@ public partial class ApplicationDbContext : DbContext
                 .HasForeignKey(d => d.IdTipoLocal)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_INMUEBLE_TIPO_LOCAL");
+
+            entity.HasIndex(e => e.NitPropietario, "IX_INMUEBLE_PROPIETARIO");
+
+            entity.HasOne(d => d.NitPropietarioNavigation).WithMany(p => p.Inmuebles)
+                .HasForeignKey(d => d.NitPropietario)
+                .HasConstraintName("FK_INMUEBLE_PROPIETARIO");
         });
 
         modelBuilder.Entity<Leasing>(entity =>

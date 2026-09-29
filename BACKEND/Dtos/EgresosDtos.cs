@@ -28,6 +28,28 @@ public record EgresosKpisDto(
     int InmueblesEnPerdida
 );
 
+/// <summary>
+/// Alta del perfil de egresos de un inmueble (uno por inmueble). El total, el EBITDA
+/// (canon del contrato vigente - total) y el cap rate (EBITDA / valor comercial) se calculan.
+/// </summary>
+public record CrearEgresoDto(
+    int IdInmueble,
+    string? NumeroContratoServicio,
+    decimal? PredialMensual,
+    decimal? SeguroArriendo,
+    decimal? ComisionAdministracionInmobiliaria,
+    decimal? CamVacante,
+    decimal? GravamenMovimientosFinancieros,
+    decimal? ComisionFiduciaria,
+    decimal? ReembolsosTerceros,
+    decimal? MantenimientoMenor
+);
+
+/// <summary>Egreso para editar: los datos del alta mas el proyecto del inmueble (para el selector).</summary>
+public record EgresoDetalleDto(int IdProyecto, CrearEgresoDto Datos);
+
+public record EgresoCreadoDto(int Id, decimal TotalEgresos, decimal? Ebitda, decimal? RentabilidadCapRate);
+
 public record EgresosResponseDto(
     PagedResult<EgresoListItemDto> Pagina,
     EgresosKpisDto Kpis

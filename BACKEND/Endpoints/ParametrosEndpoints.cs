@@ -38,6 +38,7 @@ public static class ParametrosEndpoints
 
             return Results.Ok(new IpcDto(p.Valor * 100, p.FechaActualizacion, p.ActualizadoPor));
         })
-        .WithName("ActualizarIpc");
+        .WithName("ActualizarIpc")
+        .SoloAdmin();
     }
 }

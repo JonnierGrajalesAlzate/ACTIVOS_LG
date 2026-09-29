@@ -40,6 +40,20 @@ export function formatPercent(value: number | null | undefined, fractionDigits =
   }).format(value);
 }
 
+/**
+ * Lee un numero escrito a la colombiana: "1.500.000", "1500000,5" o "1500000.5".
+ * Devuelve null si esta vacio y NaN si no es un numero.
+ */
+export function parseNumero(texto: string): number | null {
+  const s = texto.trim().replace(/[\s$%]/g, '');
+  if (!s) return null;
+  let normalizado = s;
+  if (s.includes(',')) normalizado = s.replace(/\./g, '').replace(',', '.');
+  else if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) normalizado = s.replace(/\./g, '');
+  const n = Number(normalizado);
+  return Number.isFinite(n) ? n : Number.NaN;
+}
+
 export function formatDate(value: string | null | undefined): string {
   if (!value) return '—';
   const date = new Date(`${value}T00:00:00`);

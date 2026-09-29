@@ -1,9 +1,24 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, X } from 'lucide-react';
-import { fetchEtapas, fetchInmuebles, fetchProyectos, type InmuebleListItem } from '../api/inmuebles';
+import { ArrowLeft, History, MessageSquareText, X } from 'lucide-react';
+import {
+  SIN_ETAPA,
+  deleteInmueble,
+  fetchEtapas,
+  fetchInmuebles,
+  fetchProyectos,
+  type InmuebleListItem,
+} from '../api/inmuebles';
+import { ConfirmarEliminar } from '../components/crud/ConfirmarEliminar';
+import { RowActions } from '../components/crud/RowActions';
+import { useCrud } from '../components/crud/useCrud';
 import { FilterChipRow, type ChipOption } from '../components/filters/FilterChipRow';
+import { FiltroBoton } from '../components/filters/SelectFiltro';
+import { HistorialInmuebleModal } from '../components/inmuebles/HistorialInmuebleModal';
+import { InmuebleModal } from '../components/inmuebles/InmuebleModal';
+import { EtapaModal } from '../components/proyectos/EtapaModal';
+import { usePermisos } from '../auth/permisos';
 import { Header } from '../components/layout/Header';
 import { KpiStrip } from '../components/kpi/KpiStrip';
 import { Pagination } from '../components/pagination/Pagination';
@@ -39,9 +54,34 @@ export function InmueblesPage() {
 
   const [search, setSearch] = useState('');
   const [estado, setEstado] = useState<string>(TODOS);
+  // Checklist de leasing: marcar solo una opcion filtra; ninguna o ambas muestran todos.
+  const [conLeasing, setConLeasing] = useState(false);
+  const [sinLeasing, setSinLeasing] = useState(false);
+  const leasing = conLeasing === sinLeasing ? undefined : conLeasing ? 'si' : 'no';
   const [page, setPage] = useState(1);
+  const [historial, setHistorial] = useState<InmuebleListItem | null>(null);
+  const [agregarEtapa, setAgregarEtapa] = useState(false);
+  const { puedeEditar, esAdmin } = usePermisos();
   const [sortField, setSortField] = useState('proyecto');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  // ?registrar=1 llega desde "Registrar proyecto": se abre el alta con ese proyecto ya elegido.
+  const crud = useCrud<InmuebleListItem>(searchParams.get('registrar') === '1');
+  const { modal } = crud;
+
+  const cerrarAlta = () => {
+    crud.cerrar();
+    // Se quita el parametro para que recargar la pagina no vuelva a abrir el formulario.
+    if (searchParams.has('registrar')) {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.delete('registrar');
+          return next;
+        },
+        { replace: true },
+      );
+    }
+  };
 
   const debouncedSearch = useDebouncedValue(search, 250);
 
@@ -57,13 +97,14 @@ export function InmueblesPage() {
   const etapaNombre = etapas.find((e) => e.id === etapaId)?.nombre;
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['inmuebles', { proyectoId, etapaId, debouncedSearch, estado, page, sortField, sortDir }],
+    queryKey: ['inmuebles', { proyectoId, etapaId, debouncedSearch, estado, leasing, page, sortField, sortDir }],
     queryFn: () =>
       fetchInmuebles({
         proyecto: proyectoId,
         etapa: etapaId,
         q: debouncedSearch || undefined,
         estado: estado === TODOS ? undefined : estado,
+        leasing,
         pagina: page,
         tamano: PAGE_SIZE,
         orden: sortField,
@@ -102,7 +143,33 @@ export function InmueblesPage() {
   };
 
   const columns: DataTableColumn<InmuebleListItem>[] = [
-    { key: 'nombre', header: 'Inmueble', render: (r) => r.nombre },
+    {
+      key: 'local',
+      header: 'Local',
+      sortable: true,
+      render: (r) => (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <b>{r.numeroLocal ?? '—'}</b>
+          {r.observaciones && (
+            <span title={r.observaciones} aria-label={`Observaciones: ${r.observaciones}`} style={{ color: 'var(--ink-4)', display: 'inline-flex' }}>
+              <MessageSquareText size={14} strokeWidth={2} />
+            </span>
+          )}
+        </span>
+      ),
+    },
+    { key: 'nivel', header: 'Piso / nivel', sortable: true, render: (r) => r.nivel ?? '—' },
+    {
+      key: 'tipologia',
+      header: 'Tipologia',
+      sortable: true,
+      render: (r) => (
+        <>
+          {r.tipologia}
+          <span style={{ color: 'var(--ink-4)' }}> · {r.uso}</span>
+        </>
+      ),
+    },
     {
       key: 'proyecto',
       header: 'Proyecto',
@@ -143,11 +210,50 @@ export function InmueblesPage() {
       ),
     },
     {
+      key: 'leasing',
+      header: 'Leasing',
+      render: (r) =>
+        r.tieneLeasing ? (
+          <span style={{ color: 'var(--accent)', fontWeight: 700 }}>Si</span>
+        ) : (
+          <span style={{ color: 'var(--ink-4)' }}>No</span>
+        ),
+    },
+    {
       key: 'estado',
       header: 'Estado',
       align: 'right',
       sortable: true,
       render: (r) => <span style={{ color: estadoColor(r.estado), fontWeight: 700 }}>{r.estado}</span>,
+    },
+    {
+      key: 'acciones',
+      header: '',
+      align: 'right',
+      render: (r) => (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          <button
+            type="button"
+            onClick={() => setHistorial(r)}
+            aria-label={`Historial de ${r.nombre}`}
+            title="Historial de contratos"
+            style={{
+              display: 'grid',
+              placeItems: 'center',
+              width: 30,
+              height: 30,
+              background: 'transparent',
+              border: 'none',
+              borderRadius: 8,
+              cursor: 'pointer',
+              color: 'var(--ink-3)',
+            }}
+          >
+            <History size={15} strokeWidth={2} />
+          </button>
+          <RowActions label={r.nombre} onEdit={() => crud.editar(r)} onDelete={() => crud.eliminar(r)} />
+        </span>
+      ),
     },
   ];
 
@@ -165,7 +271,35 @@ export function InmueblesPage() {
 
   return (
     <div>
-      <Header meta={pageMeta.inmuebles} searchValue={search} onSearchChange={setSearch} />
+      <Header
+        meta={pageMeta.inmuebles}
+        searchValue={search}
+        onSearchChange={(v) => {
+          setSearch(v);
+          setPage(1);
+        }}
+        onAction={puedeEditar ? crud.crear : undefined}
+      />
+      {historial && <HistorialInmuebleModal id={historial.id} nombre={historial.nombre} onClose={() => setHistorial(null)} />}
+      {agregarEtapa && proyectoId !== undefined && (
+        <EtapaModal proyectoId={proyectoId} proyectoNombre={proyectoNombre} onClose={() => setAgregarEtapa(false)} />
+      )}
+      {modal?.tipo === 'crear' && (
+        <InmuebleModal
+          onClose={cerrarAlta}
+          proyectoInicial={proyectoId}
+          etapaInicial={etapaId && etapaId !== SIN_ETAPA ? etapaId : undefined}
+        />
+      )}
+      {modal?.tipo === 'editar' && <InmuebleModal id={modal.fila.id} onClose={crud.cerrar} />}
+      {modal?.tipo === 'eliminar' && (
+        <ConfirmarEliminar
+          objeto={`el inmueble ${modal.fila.nombre} (${modal.fila.proyecto})`}
+          detalle="Si tiene perfil de egresos, se elimina con el. No se puede eliminar si tiene contratos."
+          eliminar={() => deleteInmueble(modal.fila.id)}
+          onClose={crud.cerrar}
+        />
+      )}
 
       {proyectoId !== undefined && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
@@ -223,6 +357,8 @@ export function InmueblesPage() {
               <X size={15} strokeWidth={2.2} />
             </button>
           </div>
+
+          {esAdmin && <FiltroBoton onClick={() => setAgregarEtapa(true)}>+ Agregar etapa</FiltroBoton>}
         </div>
       )}
 
@@ -251,6 +387,32 @@ export function InmueblesPage() {
           setPage(1);
         }}
       />
+
+      <fieldset style={{ display: 'flex', alignItems: 'center', gap: 18, border: 'none', margin: '4px 0 10px', padding: 0 }}>
+        <legend style={{ float: 'left', marginRight: 4, fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-4)' }}>
+          Leasing
+        </legend>
+        {[
+          { label: 'Con leasing', checked: conLeasing, set: setConLeasing },
+          { label: 'Sin leasing', checked: sinLeasing, set: setSinLeasing },
+        ].map((o) => (
+          <label
+            key={o.label}
+            style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13.5, color: 'var(--ink-2)', cursor: 'pointer' }}
+          >
+            <input
+              type="checkbox"
+              checked={o.checked}
+              onChange={(e) => {
+                o.set(e.target.checked);
+                setPage(1);
+              }}
+              style={{ width: 17, height: 17, accentColor: 'var(--accent)', cursor: 'pointer' }}
+            />
+            {o.label}
+          </label>
+        ))}
+      </fieldset>
 
       {isError ? (
         <div style={{ padding: 24, color: 'var(--danger)' }}>

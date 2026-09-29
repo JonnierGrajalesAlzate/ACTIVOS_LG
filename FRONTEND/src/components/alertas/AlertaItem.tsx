@@ -3,12 +3,14 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { aplicarIncremento } from '../../api/contrapartes';
 import type { Alerta } from '../../api/resumen';
+import { usePermisos } from '../../auth/permisos';
 import { formatCurrency } from '../../utils/format';
 import { AlertCard } from '../cards/Cards';
 import styles from './AlertaItem.module.css';
 
 /** Alerta del portafolio; las de incremento IPC permiten aplicar el canon sugerido. */
 export function AlertaItem({ alerta }: { alerta: Alerta }) {
+  const { puedeEditar } = usePermisos();
   return (
     <AlertCard
       titulo={alerta.titulo}
@@ -16,7 +18,11 @@ export function AlertaItem({ alerta }: { alerta: Alerta }) {
       motivo={alerta.motivo}
       detalle={alerta.detalle}
       severidad={alerta.severidad}
-      action={alerta.tipo === 'incremento-ipc' && alerta.idContrato !== null ? <IncrementoIpcAction alerta={alerta} /> : undefined}
+      action={
+        puedeEditar && alerta.tipo === 'incremento-ipc' && alerta.idContrato !== null ? (
+          <IncrementoIpcAction alerta={alerta} />
+        ) : undefined
+      }
     />
   );
 }
@@ -30,7 +36,7 @@ function IncrementoIpcAction({ alerta }: { alerta: Alerta }) {
     onSuccess: () => {
       setConfirmando(false);
       // El canon cambia: se refrescan todas las vistas que lo muestran.
-      for (const key of ['resumen', 'contratos', 'arrendatarios', 'inmuebles', 'reportes', 'propietarios', 'etapas']) {
+      for (const key of ['resumen', 'contratos', 'inmuebles', 'reportes', 'propietarios', 'etapas', 'historial-inmueble']) {
         queryClient.invalidateQueries({ queryKey: [key] });
       }
     },
