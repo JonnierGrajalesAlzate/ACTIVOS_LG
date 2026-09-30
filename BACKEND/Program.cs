@@ -55,11 +55,17 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         sql.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(15), errorNumbersToAdd: null);
         sql.CommandTimeout(90);
     }));
+// En la nube el dominio del frontend llega por CORS_ORIGINS (separados por coma), p. ej. la URL de Vercel.
+var corsOrigins = (builder.Configuration["CORS_ORIGINS"] ?? "")
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    .Select(o => o.TrimEnd('/'))
+    .Concat(["http://localhost:5173", "http://localhost:5174"])
+    .ToArray();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(FrontendCorsPolicy, policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "http://localhost:5174")
+        policy.WithOrigins(corsOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
