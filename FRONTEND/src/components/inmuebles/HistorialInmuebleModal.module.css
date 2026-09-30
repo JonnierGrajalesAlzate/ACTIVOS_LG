@@ -1,0 +1,142 @@
+.lista {
+  list-style: none;
+  margin: 14px 0 8px;
+  padding: 0 0 0 18px;
+  border-left: 2px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.item {
+  position: relative;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+/* Punto de la linea de tiempo. */
+.item::before {
+  content: '';
+  position: absolute;
+  left: -26px;
+  top: 18px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--ink-5);
+}
+
+.actual {
+  border-color: var(--accent-pale);
+  background: var(--surface-soft);
+}
+
+.actual::before {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.arrendatario {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.meta {
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+
+.badge {
+  margin-left: auto;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.datos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px 16px;
+  margin: 10px 0 0;
+}
+
+.datos dt {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+}
+
+.datos dd {
+  margin: 2px 0 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.incrementos {
+  width: 100%;
+  margin-top: 12px;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.incrementos caption {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  padding-bottom: 4px;
+}
+
+.incrementos th {
+  text-align: left;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.incrementos td {
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--line-2);
+}
+
+.num {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.observaciones {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-3);
+  white-space: pre-wrap;
+}
+
+.vacio {
+  padding: 24px 0;
+  text-align: center;
+  font-size: 13.5px;
+  color: var(--ink-3);
+}

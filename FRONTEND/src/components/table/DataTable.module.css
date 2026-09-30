@@ -1,0 +1,98 @@
+.tableWrap {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 6px 22px;
+  box-shadow: var(--shadow-xs);
+  box-sizing: border-box;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.th {
+  text-align: left;
+  padding: 13px 12px;
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.thRight {
+  text-align: right;
+}
+
+.thSortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.td {
+  padding: 13px 12px;
+  border-top: 1px solid var(--line-2);
+  font-size: 13.5px;
+  color: var(--ink-2);
+}
+
+.td:first-child {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.tdRight {
+  text-align: right;
+}
+
+.row {
+  transition: background 0.12s;
+}
+
+.row:hover .td {
+  background: rgba(75, 63, 212, 0.04);
+}
+
+.empty {
+  color: var(--ink-5);
+}
+
+.skeletonCell {
+  height: 19px;
+  border-radius: 6px;
+  background: var(--line-2);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.emptyState {
+  padding: 56px;
+  text-align: center;
+  color: var(--ink-3);
+}
+
+.emptyStateTitle {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+.emptyStateHelp {
+  font-size: 13.5px;
+}

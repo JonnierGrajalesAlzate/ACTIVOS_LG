@@ -1,0 +1,133 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 15px 18px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  box-shadow: var(--shadow-xs);
+  transition: box-shadow 0.2s;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.inmueble {
+  min-width: 190px;
+}
+
+.inmuebleName {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.inmuebleProyecto {
+  font-size: 12.5px;
+  color: var(--ink-4);
+  margin-top: 2px;
+}
+
+.block {
+  min-width: 150px;
+}
+
+.blockLabel {
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  font-weight: 700;
+}
+
+.blockValue {
+  font-size: 13.5px;
+  font-weight: 600;
+  margin-top: 3px;
+}
+
+.arrendatarioLink {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--accent);
+  text-align: left;
+  cursor: pointer;
+}
+
+.arrendatarioLink:hover {
+  text-decoration: underline;
+}
+
+.progress {
+  flex: 1;
+  min-width: 140px;
+}
+
+.progressMeta {
+  display: flex;
+  font-size: 12px;
+  color: var(--ink-3);
+  font-weight: 600;
+  gap: 8px;
+}
+
+.progressMetaEnd {
+  margin-left: auto;
+}
+
+.progressUnknown {
+  margin-top: 7px;
+  font-size: 11.5px;
+  font-style: italic;
+  color: var(--ink-5);
+  line-height: 6px;
+}
+
+.gestion {
+  text-align: right;
+  min-width: 110px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.skeleton {
+  height: 88px;
+  border-radius: 14px;
+  background: var(--line-2);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.empty {
+  padding: 56px;
+  text-align: center;
+  color: var(--ink-3);
+}
+
+.emptyTitle {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
