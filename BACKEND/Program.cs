@@ -55,21 +55,28 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         sql.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(15), errorNumbersToAdd: null);
         sql.CommandTimeout(90);
     }));
-// En la nube el dominio del frontend llega por CORS_ORIGINS (separados por coma), p. ej. la URL de Vercel.
+// Dominios del frontend: los fijos de Vercel y localhost, mas los que lleguen por CORS_ORIGINS (separados por coma).
 var corsOrigins = (builder.Configuration["CORS_ORIGINS"] ?? "")
     .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
     .Select(o => o.TrimEnd('/'))
-    .Concat(["http://localhost:5173", "http://localhost:5174"])
-    .ToArray();
+    .Concat(["https://activos-lg.vercel.app", "http://localhost:5173", "http://localhost:5174"])
+    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+// Vercel crea una URL de preview por rama y por deploy: activos-lg-<algo>-jonniergrajalesalzates-projects.vercel.app.
+static bool EsPreviewVercel(string origin) =>
+    Uri.TryCreate(origin, UriKind.Absolute, out var uri)
+    && uri.Scheme == Uri.UriSchemeHttps
+    && uri.Host.StartsWith("activos-lg-", StringComparison.OrdinalIgnoreCase)
+    && uri.Host.EndsWith("-jonniergrajalesalzates-projects.vercel.app", StringComparison.OrdinalIgnoreCase);
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(FrontendCorsPolicy, policy =>
     {
-        policy.WithOrigins(corsOrigins)
+        policy.SetIsOriginAllowed(origin => corsOrigins.Contains(origin) || EsPreviewVercel(origin))
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
 });
+Console.WriteLine($"CORS permitido: {string.Join(", ", corsOrigins)} + previews de Vercel del proyecto");
 
 var app = builder.Build();
 
